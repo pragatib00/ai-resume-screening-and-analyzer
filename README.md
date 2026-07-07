@@ -155,7 +155,7 @@ ollama pull llama3.2:3b
 ollama serve
 ```
 
-Leave `ollama serve` running in the background — the backend calls it at `http://localhost:11434` for resume/job text extraction.
+Leave `ollama serve` running in the background, the backend calls it at `http://localhost:11434` for resume/job text extraction.
 
 ### 3. Run the frontend
 
@@ -170,9 +170,9 @@ streamlit run app.py
 
 | Role | How it's created |
 |---|---|
-| Candidate | Self-registers via the app — active immediately |
-| Recruiter | Self-registers via the app — pending admin approval before first login |
-| Admin | Registers via the app using the correct `ADMIN_SECRET_KEY` — active immediately |
+| Candidate | Self-registers via the app - active immediately |
+| Recruiter | Self-registers via the app - pending admin approval before first login |
+| Admin | Registers via the app using the correct `ADMIN_SECRET_KEY` - active immediately |
 
 An admin can promote/demote users between candidate and recruiter, approve pending recruiters, and suspend/reactivate any non-admin account.
 
@@ -180,9 +180,9 @@ An admin can promote/demote users between candidate and recruiter, approve pendi
 
 ## How Resume Scoring Works
 
-1. **Extraction** — Ollama (`llama3.2:3b`) extracts structured data (skills, education, projects, certifications, years of experience) from both the resume and the job description.
-2. **Matching** — Skills, education, projects, and certifications are compared using fuzzy string matching (RapidFuzz); experience is compared numerically.
-3. **Weighted scoring** — Section scores are combined into a final ATS score:
+1. **Extraction** :  Ollama (`llama3.2:3b`) extracts structured data (skills, education, projects, certifications, years of experience) from both the resume and the job description.
+2. **Matching** : Skills, education, projects, and certifications are compared using fuzzy string matching (RapidFuzz); experience is compared numerically.
+3. **Weighted scoring** : Section scores are combined into a final ATS score:
 
    | Section | Weight |
    |---|---|
@@ -192,7 +192,7 @@ An admin can promote/demote users between candidate and recruiter, approve pendi
    | Projects | 15% |
    | Certifications | 10% |
 
-4. **Suggestions** — Missing skills, projects, certifications, and experience gaps are turned into plain-language suggestions for the candidate.
+4. **Suggestions** :  Missing skills, projects, certifications, and experience gaps are turned into plain-language suggestions for the candidate.
 
 ---
 
