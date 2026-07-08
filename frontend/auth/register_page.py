@@ -5,6 +5,22 @@ def show():
 
     st.header(" Create Account")
 
+    if st.session_state.get("just_registered"):
+
+        st.success(" Account created successfully!")
+
+        st.info("You can now login.")
+
+        if st.button(" Go to Login", use_container_width=True):
+
+            st.session_state.just_registered = False
+
+            st.session_state.page = "Login"
+
+            st.rerun()
+
+        return
+
     name = st.text_input("Full Name")
 
     email = st.text_input("Email")
@@ -52,15 +68,9 @@ def show():
 
         if response.status_code == 200:
 
-            st.success(" Account created successfully!")
+            st.session_state.just_registered = True
 
-            st.info("You can now login.")
-
-            if st.button(" Go to Login", use_container_width=True):
-
-                st.session_state.page = "Login"
-
-                st.rerun()
+            st.rerun()
 
         else:
 
