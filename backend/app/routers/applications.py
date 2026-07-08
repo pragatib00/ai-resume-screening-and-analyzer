@@ -20,10 +20,39 @@ from app.services.scoring_service import (
     calculate_ats_score
 )
 
+from app.services.suggestion_service import (
+    generate_suggestions
+)
+
 router = APIRouter(
     prefix="/applications",
     tags=["Applications"]
 )
+
+
+def _build_job_data(job):
+    """
+    Shared helper so upload_resume and the analysis endpoint always
+    score against the exact same job_data. Skills come directly from
+    the structured `required_skills` field the recruiter typed in
+    Create Job, rather than being re-extracted by the LLM from free
+    text -- that field is already clean, so re-parsing it only added
+    a chance of extraction failure (which, combined with the old
+    scoring defaults, was the source of the 100% ATS score bug).
+    Education / projects / certifications / experience still come
+    from the freeform description, since those aren't captured as
+    structured fields.
+    """
+
+    job_data = extract_job_information(job.description)
+
+    job_data["skills"] = [
+        s.strip()
+        for s in (job.required_skills or "").split(",")
+        if s.strip()
+    ]
+
+    return job_data
 
 
 # =====================================================
@@ -170,16 +199,6 @@ def upload_resume(
         models.Job.id == application.job_id
     ).first()
 
-    job_text = (
-
-        job.description +
-
-        " " +
-
-        job.required_skills
-
-    )
-
     # ---------------------------------------------------
     # Same pipeline as the standalone Resume Analyzer:
     # LLM-based structured extraction -> fuzzy matching ->
@@ -191,9 +210,7 @@ def upload_resume(
         resume_text
     )
 
-    job_data = extract_job_information(
-        job_text
-    )
+    job_data = _build_job_data(job)
 
     scores = calculate_ats_score(
         resume_data,
@@ -217,8 +234,6 @@ def upload_resume(
     # ---------------------------------------------------
 
     try:
-
-        from app.services.suggestion_service import generate_suggestions
 
         analysis = generate_suggestions(resume_data, job_data)
 
@@ -335,6 +350,141 @@ def get_applicants(
     ).all()
 
     return applications
+
+
+# =====================================================
+# Recruiter: Detailed Applicant Analysis
+# =====================================================
+
+@router.get("/{application_id}/analysis")
+def analyze_applicant(
+
+    application_id: int,
+
+    db: Session = Depends(get_db),
+
+    current_user: models.User = Depends(get_current_user)
+
+):
+
+    if current_user.role != "recruiter":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Only recruiters."
+        )
+
+    application = db.query(
+        models.Application
+    ).filter(
+        models.Application.id == application_id
+    ).first()
+
+    if application is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Application not found."
+        )
+
+    job = db.query(
+        models.Job
+    ).filter(
+        models.Job.id == application.job_id
+    ).first()
+
+    if job is None:
+
+        raise HTTPException(
+            status_code=404,
+            detail="Job not found."
+        )
+
+    if job.posted_by != current_user.id:
+
+        raise HTTPException(
+            status_code=403,
+            detail="Unauthorized."
+        )
+
+    if not application.resume_path:
+
+        raise HTTPException(
+            status_code=400,
+            detail="This candidate has not uploaded a resume yet."
+        )
+
+    resume_text = extract_text_from_pdf(
+        application.resume_path
+    )
+
+    resume_data = extract_resume_information(
+        resume_text
+    )
+
+    job_data = _build_job_data(job)
+
+    # TEMP DEBUG -- remove once the empty-score issue is resolved
+    print("\n================ DEBUG: job.required_skills ================")
+    print(repr(job.required_skills))
+    print("\n================ DEBUG: resume_data ================")
+    print(resume_data)
+    print("\n================ DEBUG: job_data ================")
+    print(job_data)
+
+    scores = calculate_ats_score(
+        resume_data,
+        job_data
+    )
+
+    analysis = generate_suggestions(
+        resume_data,
+        job_data
+    )
+
+    # Keep the stored match_score in sync with this recomputation,
+    # in case scoring logic has changed since the resume was
+    # originally uploaded.
+    application.match_score = scores["ats_score"]
+
+    db.commit()
+
+    return {
+
+        "ats_score": scores["ats_score"],
+
+        "section_scores": {
+
+            "skills": scores["skills_score"],
+
+            "education": scores["education_score"],
+
+            "projects": scores["projects_score"],
+
+            "certifications": scores["certifications_score"],
+
+            "experience": scores["experience_score"],
+
+        },
+
+        "scored_categories": scores["scored_categories"],
+
+        "resume_information": resume_data,
+
+        "job_information": job_data,
+
+        "matched_skills": analysis["matched_skills"],
+        "missing_skills": analysis["missing_skills"],
+
+        "matched_projects": analysis["matched_projects"],
+        "missing_projects": analysis["missing_projects"],
+
+        "matched_certifications": analysis["matched_certifications"],
+        "missing_certifications": analysis["missing_certifications"],
+
+        "suggestions": analysis["suggestions"]
+
+    }
 
 
 # =====================================================

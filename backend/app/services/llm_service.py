@@ -52,7 +52,7 @@ def flatten_items(items):
     return flattened
 
 
-def extract_list(text, instruction):
+def extract_list(text, instruction, retries=1):
 
     prompt = f"""
 You are an ATS parser.
@@ -76,21 +76,46 @@ Example:
 ]
 """
 
-    try:
-        response = query_llm(prompt)
+    last_error = None
 
-        start = response.find("[")
-        end = response.rfind("]") + 1
+    # An empty result from a single LLM call is ambiguous: it could
+    # genuinely mean "no items", or it could mean the model produced
+    # unparseable output. We retry a couple of times before accepting
+    # an empty result, and log clearly when we give up, so a silent
+    # extraction failure doesn't get treated as "requirement met" by
+    # the scoring layer.
+    for attempt in range(retries + 1):
 
-        raw_items = json.loads(response[start:end])
+        try:
+            response = query_llm(prompt)
 
-        return flatten_items(raw_items)
+            start = response.find("[")
+            end = response.rfind("]") + 1
 
-    except Exception as e:
-        print(f"extract_list failed: {e}")
-        return []
-    
-def extract_integer(text, instruction):
+            if start == -1 or end <= start:
+                raise ValueError(f"No JSON array found in LLM response: {response!r}")
+
+            raw_items = json.loads(response[start:end])
+
+            items = flatten_items(raw_items)
+
+            if items:
+                return items
+
+            # Empty but technically valid JSON -- retry before accepting it
+            last_error = "LLM returned an empty array"
+
+        except Exception as e:
+            last_error = e
+
+    print(
+        f"extract_list: giving up after {retries + 1} attempt(s), "
+        f"returning empty list. Last error: {last_error}"
+    )
+
+    return []
+
+def extract_integer(text, instruction, retries=1):
 
     prompt = f"""
 {text}
@@ -104,18 +129,30 @@ Example:
 2
 """
 
-    try:
+    last_error = None
 
-        response = query_llm(prompt)
+    for attempt in range(retries + 1):
 
-        match = re.search(r"\d+", response)
+        try:
+            response = query_llm(prompt)
 
-        return int(match.group()) if match else 0
+            match = re.search(r"\d+", response)
 
-    except Exception as e:
-        print(f"extract_integer failed: {e}")
-        return 0
-    
+            if match:
+                return int(match.group())
+
+            last_error = f"No integer found in LLM response: {response!r}"
+
+        except Exception as e:
+            last_error = e
+
+    print(
+        f"extract_integer: giving up after {retries + 1} attempt(s), "
+        f"returning 0. Last error: {last_error}"
+    )
+
+    return 0
+
 def extract_resume_information(text):
 
     return {
