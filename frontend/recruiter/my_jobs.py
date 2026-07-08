@@ -78,9 +78,11 @@ def show():
                     key=f"e{job['id']}"
                 ):
 
-                    st.info(
-                        "Edit page coming next."
-                    )
+                    st.session_state.editing_job = job
+
+                    st.session_state.page = "Edit Job"
+
+                    st.rerun()
 
             with c3:
 
