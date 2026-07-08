@@ -11,6 +11,7 @@ from candidate.resume_analyzer import show as resume_analyzer
 from recruiter.dashboard import show as recruiter_dashboard
 from recruiter.create_job import show as create_job
 from recruiter.my_jobs import show as my_jobs
+from recruiter.edit_job import show as edit_job
 from recruiter.profile import show as recruiter_profile
 from recruiter.applicants import show as applicants
 
@@ -208,6 +209,10 @@ else:
         elif st.session_state.page == "My Jobs":
 
             my_jobs()
+
+        elif st.session_state.page == "Edit Job":
+
+            edit_job()
 
         elif st.session_state.page == "Create Job":
 

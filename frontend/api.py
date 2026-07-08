@@ -109,6 +109,21 @@ def delete_job(job_id, token):
         headers=headers
     )
 
+
+def update_job(job_id, token, job):
+
+    url = f"{BASE_URL}/jobs/{job_id}"
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    return requests.put(
+        url,
+        json=job,
+        headers=headers
+    )
+
 # ==========================
 # APPLICATIONS
 # ==========================
@@ -247,6 +262,43 @@ def update_application_status(
     return requests.put(
         url,
         json=data,
+        headers=headers
+    )
+
+
+def upload_resume_file(application_id, uploaded_file, token):
+
+    url = f"{BASE_URL}/applications/{application_id}/upload"
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    files = {
+        "file": (
+            uploaded_file.name,
+            uploaded_file.getvalue(),
+            "application/pdf"
+        )
+    }
+
+    return requests.post(
+        url,
+        files=files,
+        headers=headers
+    )
+
+
+def get_applicant_analysis(application_id, token):
+
+    url = f"{BASE_URL}/applications/{application_id}/analysis"
+
+    headers = {
+        "Authorization": f"Bearer {token}"
+    }
+
+    return requests.get(
+        url,
         headers=headers
     )
 
