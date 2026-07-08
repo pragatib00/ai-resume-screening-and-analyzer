@@ -36,18 +36,6 @@ def show():
     total_jobs = len(jobs)
     total_applications = len(applications)
 
-    if total_applications:
-
-        average_score = round(
-            sum(a["match_score"] for a in applications)
-            / total_applications,
-            2
-        )
-
-    else:
-
-        average_score = 0
-
     pending = len([
         a for a in applications
         if a["status"] == "Pending"
@@ -58,7 +46,7 @@ def show():
         if a["status"] == "Shortlisted"
     ])
 
-    c1, c2, c3, c4 = st.columns(4)
+    c1, c2, c3 = st.columns(3)
 
     c1.metric(
         " Jobs",
@@ -71,11 +59,6 @@ def show():
     )
 
     c3.metric(
-        " Avg AI Score",
-        f"{average_score}%"
-    )
-
-    c4.metric(
         "Shortlisted",
         shortlisted
     )
@@ -112,14 +95,6 @@ def show():
 
                 st.write(
                     f"Status: **{app['status']}**"
-                )
-
-                st.progress(
-                    app["match_score"] / 100
-                )
-
-                st.caption(
-                    f"AI Score : {app['match_score']}%"
                 )
 
     st.divider()

@@ -51,14 +51,6 @@ def show():
 
                 st.error(" Rejected")
 
-            st.write("### AI Match Score")
-
-            score = app["match_score"]
-
-            st.progress(score / 100)
-
-            st.success(f"{score}% Match")
-
             st.write("### Resume")
 
             if app["resume_path"]:
@@ -68,29 +60,3 @@ def show():
             else:
 
                 st.error(" Resume Not Uploaded")
-
-            st.write("### Suggestions")
-
-            if score >= 90:
-
-                st.success(
-                    "Excellent match! Your resume closely matches the job."
-                )
-
-            elif score >= 70:
-
-                st.info(
-                    "Good match. Consider adding more relevant technical skills."
-                )
-
-            elif score >= 50:
-
-                st.warning(
-                    "Average match. Tailor your resume to the job description."
-                )
-
-            else:
-
-                st.error(
-                    "Low match. Update your resume with more relevant experience and skills."
-                )

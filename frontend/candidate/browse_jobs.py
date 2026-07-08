@@ -1,5 +1,5 @@
 import streamlit as st
-from api import get_jobs, apply_job, get_my_applications
+from api import get_jobs, apply_job, get_my_applications, upload_resume_file
 
 def show():
 
@@ -30,8 +30,8 @@ def show():
     else:
         applications = []
 
-    applied_job_ids = {
-        app["job"]["id"]
+    applications_by_job = {
+        app["job"]["id"]: app
         for app in applications
     }
 
@@ -112,11 +112,13 @@ def show():
 
             st.divider()
 
-            if job["id"] in applied_job_ids:
+            application = applications_by_job.get(job["id"])
 
-                st.success(" Already Applied")
+            # --------------------------------
+            # Not applied yet
+            # --------------------------------
 
-            else:
+            if application is None:
 
                 if st.button(
                     "Apply",
@@ -134,10 +136,6 @@ def show():
                             "Application submitted successfully!"
                         )
 
-                        st.info(
-                            "Go to Upload Resume to upload your CV."
-                        )
-
                         st.rerun()
 
                     else:
@@ -151,3 +149,62 @@ def show():
                             st.error(
                                 "Application failed."
                             )
+
+            # --------------------------------
+            # Applied, resume already uploaded
+            # --------------------------------
+
+            elif application["resume_path"]:
+
+                st.success(" Already Applied  •  Resume Uploaded")
+
+            # --------------------------------
+            # Applied, resume still needed
+            # --------------------------------
+
+            else:
+
+                st.success(" Already Applied")
+
+                st.warning(
+                    "Your resume hasn't been uploaded for this application yet."
+                )
+
+                uploaded_file = st.file_uploader(
+                    "Upload Resume (PDF)",
+                    type=["pdf"],
+                    key=f"resume_upload_{application['id']}"
+                )
+
+                if uploaded_file is not None:
+
+                    if st.button(
+                        "Upload Resume",
+                        key=f"upload_btn_{application['id']}"
+                    ):
+
+                        upload_response = upload_resume_file(
+                            application["id"],
+                            uploaded_file,
+                            token
+                        )
+
+                        if upload_response.status_code == 200:
+
+                            st.success(
+                                "Resume uploaded successfully!"
+                            )
+
+                            st.rerun()
+
+                        else:
+
+                            try:
+                                st.error(
+                                    upload_response.json()["detail"]
+                                )
+
+                            except:
+                                st.error(
+                                    "Resume upload failed."
+                                )
