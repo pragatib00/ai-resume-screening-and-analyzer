@@ -1,4 +1,4 @@
-from rapidfuzz import fuzz
+from app.services.fuzzy_match import token_set_ratio
 
 
 # ---------------------------------------------------------
@@ -25,9 +25,9 @@ def fuzzy_similarity(resume_items, job_items, threshold=80):
 
         for resume in resume_items:
 
-            score = fuzz.token_set_ratio(
-                resume.lower(),
-                job.lower()
+            score = token_set_ratio(
+                resume,
+                job
             )
 
             if score > best:
