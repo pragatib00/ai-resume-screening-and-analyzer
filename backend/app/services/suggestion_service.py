@@ -39,24 +39,14 @@ def get_matches(resume_items, job_items, threshold=80):
 # ==========================================================
 # Suggestions
 # ==========================================================
+# Focused on Skills, Education, and Experience only - Projects
+# and Certifications are intentionally not matched or suggested on.
 
 def generate_suggestions(resume_data, job_data):
 
     matched_skills, missing_skills = get_matches(
         resume_data["skills"],
         job_data["skills"],
-        threshold=80
-    )
-
-    matched_projects, missing_projects = get_matches(
-        resume_data["projects"],
-        job_data["projects"],
-        threshold=75
-    )
-
-    matched_certifications, missing_certifications = get_matches(
-        resume_data["certifications"],
-        job_data["certifications"],
         threshold=80
     )
 
@@ -74,18 +64,6 @@ def generate_suggestions(resume_data, job_data):
             + ", ".join(missing_skills) + "."
         )
 
-    if missing_projects:
-        suggestions.append(
-            "Consider showcasing projects related to: "
-            + ", ".join(missing_projects) + "."
-        )
-
-    if missing_certifications:
-        suggestions.append(
-            "Relevant certifications that may strengthen your profile: "
-            + ", ".join(missing_certifications) + "."
-        )
-
     candidate_exp = resume_data["experience_years"]
     required_exp = job_data["experience_years"]
 
@@ -96,7 +74,7 @@ def generate_suggestions(resume_data, job_data):
 
     if missing_education:
         suggestions.append(
-            "Your educational background is related, but make sure to highlight relevant coursework, academic projects, or certifications."
+            "Your educational background is related, but make sure to highlight relevant coursework or academic achievements."
         )
 
     if not suggestions:
@@ -109,11 +87,8 @@ def generate_suggestions(resume_data, job_data):
         "matched_skills": matched_skills,
         "missing_skills": missing_skills,
 
-        "matched_projects": matched_projects,
-        "missing_projects": missing_projects,
-
-        "matched_certifications": matched_certifications,
-        "missing_certifications": missing_certifications,
+        "matched_education": matched_education,
+        "missing_education": missing_education,
 
         "suggestions": suggestions
 

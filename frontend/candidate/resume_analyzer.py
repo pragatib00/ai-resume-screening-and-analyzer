@@ -19,8 +19,6 @@ The analyzer evaluates:
 - Skills Matching
 - Education
 - Experience
-- Projects
-- Certifications
 """
     )
 
@@ -101,23 +99,13 @@ The analyzer evaluates:
 
         scores = result["section_scores"]
 
-        c1, c2 = st.columns(2)
+        c1, c2, c3 = st.columns(3)
 
         with c1:
 
             st.metric(
                 "Skills",
                 f"{scores['skills']}%"
-            )
-
-            st.metric(
-                "Projects",
-                f"{scores['projects']}%"
-            )
-
-            st.metric(
-                "Experience",
-                f"{scores['experience']}%"
             )
 
         with c2:
@@ -127,15 +115,17 @@ The analyzer evaluates:
                 f"{scores['education']}%"
             )
 
+        with c3:
+
             st.metric(
-                "Certifications",
-                f"{scores['certifications']}%"
+                "Experience",
+                f"{scores['experience']}%"
             )
 
         st.divider()
 
         # ===================================================
-        # MATCHED SKILLS
+        # MATCHED / MISSING SKILLS
         # ===================================================
 
         left, right = st.columns(2)
@@ -167,66 +157,34 @@ The analyzer evaluates:
         st.divider()
 
         # ===================================================
-        # PROJECTS
+        # MATCHED / MISSING EDUCATION
         # ===================================================
 
         left, right = st.columns(2)
 
         with left:
 
-            st.subheader(" Matching Projects")
+            st.subheader(" Matching Education")
 
-            if result["matched_projects"]:
+            if result["matched_education"]:
 
-                for project in result["matched_projects"]:
-                    st.success(project)
+                for item in result["matched_education"]:
+                    st.success(item)
 
             else:
-                st.info("No matching projects.")
+                st.info("No matching education requirements.")
 
         with right:
 
-            st.subheader(" Missing Projects")
+            st.subheader(" Missing Education")
 
-            if result["missing_projects"]:
+            if result["missing_education"]:
 
-                for project in result["missing_projects"]:
-                    st.error(project)
-
-            else:
-                st.success("No missing projects.")
-
-        st.divider()
-
-        # ===================================================
-        # CERTIFICATIONS
-        # ===================================================
-
-        left, right = st.columns(2)
-
-        with left:
-
-            st.subheader(" Matching Certifications")
-
-            if result["matched_certifications"]:
-
-                for cert in result["matched_certifications"]:
-                    st.success(cert)
+                for item in result["missing_education"]:
+                    st.error(item)
 
             else:
-                st.info("No matching certifications.")
-
-        with right:
-
-            st.subheader(" Missing Certifications")
-
-            if result["missing_certifications"]:
-
-                for cert in result["missing_certifications"]:
-                    st.error(cert)
-
-            else:
-                st.success("No missing certifications.")
+                st.success("No missing education requirements.")
 
         st.divider()
 

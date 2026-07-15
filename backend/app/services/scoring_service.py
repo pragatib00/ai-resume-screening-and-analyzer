@@ -60,15 +60,19 @@ def experience_score(candidate, required):
 # ---------------------------------------------------------
 # ATS Score
 # ---------------------------------------------------------
+# Focused on Skills, Education, and Experience only - Projects
+# and Certifications are intentionally excluded, since Skills and
+# Experience are what most directly indicate whether a candidate
+# is qualified for a role.
 
 def calculate_ats_score(resume_data, job_data):
     """
     Only categories where the job side has actual extracted
-    requirements are included in the weighted score. This
-    avoids the old behavior of silently crediting 100% for
-    any category the LLM failed to extract from the job
-    description (which was making every resume score ~100%
-    whenever job extraction came back empty).
+    requirements are included in the weighted score. This avoids
+    silently crediting 100% for any category the extractor failed
+    to find in the job description (which was making every resume
+    score ~100% whenever job extraction came back empty for a
+    category).
 
     If NOTHING could be reliably extracted from the job
     description, we return an ats_score of 0 rather than 100,
@@ -78,18 +82,14 @@ def calculate_ats_score(resume_data, job_data):
     """
 
     weights = {
-        "skills": 0.40,
-        "education": 0.15,
-        "projects": 0.15,
-        "certifications": 0.10,
-        "experience": 0.20
+        "skills": 0.50,
+        "education": 0.20,
+        "experience": 0.30
     }
 
     thresholds = {
         "skills": 80,
-        "education": 70,
-        "projects": 75,
-        "certifications": 80
+        "education": 70
     }
 
     raw_scores = {}
@@ -126,8 +126,6 @@ def calculate_ats_score(resume_data, job_data):
             "ats_score": 0,
             "skills_score": raw_scores.get("skills", 0),
             "education_score": raw_scores.get("education", 0),
-            "projects_score": raw_scores.get("projects", 0),
-            "certifications_score": raw_scores.get("certifications", 0),
             "experience_score": raw_scores.get("experience", 0),
             "scored_categories": []
         }
@@ -147,13 +145,10 @@ def calculate_ats_score(resume_data, job_data):
 
         "education_score": round(raw_scores.get("education", 0), 2),
 
-        "projects_score": round(raw_scores.get("projects", 0), 2),
-
-        "certifications_score": round(raw_scores.get("certifications", 0), 2),
-
         "experience_score": round(raw_scores.get("experience", 0), 2),
 
         # exposed so the UI can show *why* a category was skipped
-        # (e.g. "no certifications required, or none detected")
+        # (e.g. "no education requirement detected in job description")
         "scored_categories": list(active_weights.keys())
+
     }

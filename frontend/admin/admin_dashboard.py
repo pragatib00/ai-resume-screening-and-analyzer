@@ -457,12 +457,12 @@ def show():
 
         if not logs:
 
-            st.success("No extraction failures logged. 🎉")
+            st.success("No extraction failures logged.")
 
         else:
 
             st.warning(
-                f"{len(logs)} recent extraction failure(s) — showing most recent first."
+                f"{len(logs)} recent extraction failure(s), showing most recent first."
             )
 
             for log in logs:

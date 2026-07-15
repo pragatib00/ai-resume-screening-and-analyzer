@@ -31,18 +31,6 @@ router = APIRouter(
 
 
 def _build_job_data(job):
-    """
-    Shared helper so upload_resume and the analysis endpoint always
-    score against the exact same job_data. Skills come directly from
-    the structured `required_skills` field the recruiter typed in
-    Create Job, rather than being re-extracted by the LLM from free
-    text -- that field is already clean, so re-parsing it only added
-    a chance of extraction failure (which, combined with the old
-    scoring defaults, was the source of the 100% ATS score bug).
-    Education / projects / certifications / experience still come
-    from the freeform description, since those aren't captured as
-    structured fields.
-    """
 
     job_data = extract_job_information(job.description)
 
@@ -424,14 +412,6 @@ def analyze_applicant(
 
     job_data = _build_job_data(job)
 
-    # TEMP DEBUG -- remove once the empty-score issue is resolved
-    print("\n================ DEBUG: job.required_skills ================")
-    print(repr(job.required_skills))
-    print("\n================ DEBUG: resume_data ================")
-    print(resume_data)
-    print("\n================ DEBUG: job_data ================")
-    print(job_data)
-
     scores = calculate_ats_score(
         resume_data,
         job_data
@@ -459,10 +439,6 @@ def analyze_applicant(
 
             "education": scores["education_score"],
 
-            "projects": scores["projects_score"],
-
-            "certifications": scores["certifications_score"],
-
             "experience": scores["experience_score"],
 
         },
@@ -476,11 +452,8 @@ def analyze_applicant(
         "matched_skills": analysis["matched_skills"],
         "missing_skills": analysis["missing_skills"],
 
-        "matched_projects": analysis["matched_projects"],
-        "missing_projects": analysis["missing_projects"],
-
-        "matched_certifications": analysis["matched_certifications"],
-        "missing_certifications": analysis["missing_certifications"],
+        "matched_education": analysis["matched_education"],
+        "missing_education": analysis["missing_education"],
 
         "suggestions": analysis["suggestions"]
 

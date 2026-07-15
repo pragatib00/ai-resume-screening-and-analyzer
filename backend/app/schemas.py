@@ -22,8 +22,7 @@ class UserResponse(BaseModel):
     email: str
     role: str
     status: str
-# ^ Replace your EXISTING UserResponse class with this version (adds status)
- 
+
     model_config = ConfigDict(
         from_attributes=True
     )
@@ -125,15 +124,16 @@ class StatusResponse(BaseModel):
     message: str
     status: str
 
+# ---------------------------------------------------------
+# Resume Analysis - Skills, Education, and Experience only.
+# Projects and Certifications are intentionally excluded.
+# ---------------------------------------------------------
+
 class SectionScores(BaseModel):
 
     skills: float
 
     education: float
-
-    projects: float
-
-    certifications: float
 
     experience: float
 
@@ -146,10 +146,6 @@ class ResumeInformation(BaseModel):
 
     experience_years: int
 
-    projects: list[str]
-
-    certifications: list[str]
-
 
 class JobInformation(BaseModel):
 
@@ -158,10 +154,6 @@ class JobInformation(BaseModel):
     education: list[str]
 
     experience_years: int
-
-    projects: list[str]
-
-    certifications: list[str]
 
 
 class ResumeAnalysisResponse(BaseModel):
@@ -178,13 +170,9 @@ class ResumeAnalysisResponse(BaseModel):
 
     missing_skills: list[str]
 
-    matched_projects: list[str]
+    matched_education: list[str]
 
-    missing_projects: list[str]
-
-    matched_certifications: list[str]
-
-    missing_certifications: list[str]
+    missing_education: list[str]
 
     suggestions: list[str]
 
@@ -200,17 +188,17 @@ class ErrorLogResponse(BaseModel):
     source: str
     message: str
     created_at: datetime
- 
+
     model_config = ConfigDict(
         from_attributes=True
     )
- 
- 
+
+
 class MissingSkillCount(BaseModel):
     skill: str
     count: int
- 
- 
+
+
 class AnalyticsResponse(BaseModel):
     total_analyses: int
     average_ats_score: float

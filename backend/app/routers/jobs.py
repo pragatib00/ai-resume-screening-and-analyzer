@@ -1,5 +1,6 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import get_db
 from app import models, schemas
@@ -160,8 +161,26 @@ def delete_job(
             detail="You can only delete your own jobs."
         )
 
-    db.delete(job)
-    db.commit()
+    try:
+
+        # Cascade: remove any applications tied to this job first,
+        # otherwise the database's foreign key constraint blocks
+        # deletion of the job (Application.job_id references Job.id).
+        db.query(models.Application).filter(
+            models.Application.job_id == job_id
+        ).delete(synchronize_session=False)
+
+        db.delete(job)
+        db.commit()
+
+    except SQLAlchemyError as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unable to delete job: {str(e)}"
+        )
 
     return {
         "message": "Job deleted successfully."

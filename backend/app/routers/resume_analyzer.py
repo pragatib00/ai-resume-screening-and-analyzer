@@ -158,10 +158,6 @@ def analyze_resume(
 
             "education": scores["education_score"],
 
-            "projects": scores["projects_score"],
-
-            "certifications": scores["certifications_score"],
-
             "experience": scores["experience_score"]
 
         },
@@ -174,13 +170,9 @@ def analyze_resume(
 
         "missing_skills": analysis["missing_skills"],
 
-        "matched_projects": analysis["matched_projects"],
+        "matched_education": analysis["matched_education"],
 
-        "missing_projects": analysis["missing_projects"],
-
-        "matched_certifications": analysis["matched_certifications"],
-
-        "missing_certifications": analysis["missing_certifications"],
+        "missing_education": analysis["missing_education"],
 
         "suggestions": analysis["suggestions"]
 

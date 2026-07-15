@@ -64,7 +64,7 @@ def show():
             # --------------------------
 
             st.subheader(
-                f"#{rank}  {applicant['candidate']['name']}"
+                f"{rank})  {applicant['candidate']['name']}"
             )
 
             st.write(
@@ -164,13 +164,11 @@ def show():
 
                         st.write("#### Section Scores")
 
-                        sc1, sc2, sc3, sc4, sc5 = st.columns(5)
+                        sc1, sc2, sc3 = st.columns(3)
 
                         sc1.metric("Skills", f"{sections['skills']}%")
                         sc2.metric("Education", f"{sections['education']}%")
-                        sc3.metric("Projects", f"{sections['projects']}%")
-                        sc4.metric("Certifications", f"{sections['certifications']}%")
-                        sc5.metric("Experience", f"{sections['experience']}%")
+                        sc3.metric("Experience", f"{sections['experience']}%")
 
                         st.divider()
 
@@ -186,19 +184,11 @@ def show():
                             else:
                                 st.caption("None matched.")
 
-                            st.write("#### Matched Projects")
+                            st.write("#### Matched Education")
 
-                            if analysis["matched_projects"]:
-                                for p in analysis["matched_projects"]:
-                                    st.success(p)
-                            else:
-                                st.caption("None matched.")
-
-                            st.write("#### Matched Certifications")
-
-                            if analysis["matched_certifications"]:
-                                for c in analysis["matched_certifications"]:
-                                    st.success(c)
+                            if analysis["matched_education"]:
+                                for item in analysis["matched_education"]:
+                                    st.success(item)
                             else:
                                 st.caption("None matched.")
 
@@ -212,19 +202,11 @@ def show():
                             else:
                                 st.caption("None missing.")
 
-                            st.write("#### Missing Projects")
+                            st.write("#### Missing Education")
 
-                            if analysis["missing_projects"]:
-                                for p in analysis["missing_projects"]:
-                                    st.error(p)
-                            else:
-                                st.caption("None missing.")
-
-                            st.write("#### Missing Certifications")
-
-                            if analysis["missing_certifications"]:
-                                for c in analysis["missing_certifications"]:
-                                    st.error(c)
+                            if analysis["missing_education"]:
+                                for item in analysis["missing_education"]:
+                                    st.error(item)
                             else:
                                 st.caption("None missing.")
 
@@ -237,15 +219,10 @@ def show():
 
                         st.write(
                             f"Candidate has **{candidate_exp} year(s)** of experience "
-                            f"— job requires **{required_exp} year(s)**."
+                            f", job requires **{required_exp} year(s)**."
                         )
 
                         st.divider()
-
-                        st.write("#### Suggestions")
-
-                        for suggestion in analysis["suggestions"]:
-                            st.info(suggestion)
 
                         if st.button(
                             "Re-analyze",

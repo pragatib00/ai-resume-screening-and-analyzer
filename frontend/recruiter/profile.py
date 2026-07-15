@@ -9,7 +9,7 @@ from api import (
 
 def show():
 
-    st.title("👤 Recruiter Profile")
+    st.title(" Recruiter Profile")
 
     token = st.session_state.token
 
