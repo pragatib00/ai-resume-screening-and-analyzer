@@ -2,7 +2,7 @@ from app.services.fuzzy_match import token_set_ratio
 
 
 # ==========================================================
-# Generic Fuzzy Matching
+# Find Matched and Missing Items
 # ==========================================================
 
 def get_matches(resume_items, job_items, threshold=80):
@@ -17,8 +17,8 @@ def get_matches(resume_items, job_items, threshold=80):
         for resume in resume_items:
 
             score = token_set_ratio(
-                resume,
-                job
+                resume.lower(),
+                job.lower()
             )
 
             if score >= threshold:
@@ -26,11 +26,9 @@ def get_matches(resume_items, job_items, threshold=80):
                 matched.append(job)
 
                 found = True
-
                 break
 
         if not found:
-
             missing.append(job)
 
     return matched, missing
@@ -39,47 +37,66 @@ def get_matches(resume_items, job_items, threshold=80):
 # ==========================================================
 # Suggestions
 # ==========================================================
-# Focused on Skills, Education, and Experience only - Projects
-# and Certifications are intentionally not matched or suggested on.
 
 def generate_suggestions(resume_data, job_data):
 
     matched_skills, missing_skills = get_matches(
-        resume_data["skills"],
-        job_data["skills"],
+        resume_data.get("skills", []),
+        job_data.get("skills", []),
         threshold=80
     )
 
     matched_education, missing_education = get_matches(
-        resume_data["education"],
-        job_data["education"],
+        resume_data.get("education", []),
+        job_data.get("education", []),
         threshold=70
     )
 
     suggestions = []
 
+    # ------------------------------------------------------
+    # Skills
+    # ------------------------------------------------------
+
     if missing_skills:
+
         suggestions.append(
-            "Consider adding or highlighting these skills: "
-            + ", ".join(missing_skills) + "."
+            "Consider adding or improving these skills: "
+            + ", ".join(missing_skills)
         )
 
-    candidate_exp = resume_data["experience_years"]
-    required_exp = job_data["experience_years"]
+    # ------------------------------------------------------
+    # Experience
+    # ------------------------------------------------------
+
+    candidate_exp = resume_data.get("experience_years", 0)
+    required_exp = job_data.get("experience_years", 0)
 
     if required_exp > candidate_exp:
+
         suggestions.append(
-            f"The job requires approximately {required_exp} years of experience, but your resume shows {candidate_exp} years."
+            f"This job requires approximately {required_exp} years of experience, "
+            f"but your resume shows {candidate_exp} years."
         )
+
+    # ------------------------------------------------------
+    # Education
+    # ------------------------------------------------------
 
     if missing_education:
+
         suggestions.append(
-            "Your educational background is related, but make sure to highlight relevant coursework or academic achievements."
+            "Highlight relevant coursework or academic achievements that match the required education."
         )
 
+    # ------------------------------------------------------
+    # Final Suggestion
+    # ------------------------------------------------------
+
     if not suggestions:
+
         suggestions.append(
-            "Excellent match! Your resume aligns well with this job description."
+            "Excellent match! Your resume aligns well with the job description."
         )
 
     return {

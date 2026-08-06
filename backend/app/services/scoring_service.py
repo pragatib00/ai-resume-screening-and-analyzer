@@ -1,18 +1,160 @@
+import math
+import re
+from collections import Counter
+
 from app.services.fuzzy_match import token_set_ratio
 
 
-# ---------------------------------------------------------
-# Generic Fuzzy Similarity
-# ---------------------------------------------------------
+# ==========================================================
+# Text Preprocessing
+# ==========================================================
 
-def fuzzy_similarity(resume_items, job_items, threshold=80):
-    """
-    NOTE: caller is responsible for only invoking this when
-    job_items is non-empty. An empty job_items list no longer
-    means "perfect match" -- see calculate_ats_score, which
-    excludes categories with no extracted job requirements
-    instead of crediting them automatically.
-    """
+def preprocess(text):
+
+    text = text.lower()
+
+    return re.findall(r"[a-z0-9]+", text)
+
+
+# ==========================================================
+# Manual TF
+# ==========================================================
+
+def term_frequency(tokens):
+
+    total = len(tokens)
+
+    if total == 0:
+        return {}
+
+    counts = Counter(tokens)
+
+    tf = {}
+
+    for word, count in counts.items():
+        tf[word] = count / total
+
+    return tf
+
+
+# ==========================================================
+# Manual IDF
+# ==========================================================
+
+def inverse_document_frequency(documents):
+
+    N = len(documents)
+
+    vocabulary = set()
+
+    for doc in documents:
+        vocabulary.update(doc)
+
+    idf = {}
+
+    for word in vocabulary:
+
+        containing = sum(
+            1 for doc in documents if word in doc
+        )
+
+        idf[word] = math.log((N + 1) / (containing + 1)) + 1
+
+    return idf
+
+
+# ==========================================================
+# TF-IDF Vector
+# ==========================================================
+
+def tfidf_vector(tokens, idf):
+
+    tf = term_frequency(tokens)
+
+    vector = {}
+
+    for word in idf:
+
+        vector[word] = tf.get(word, 0) * idf[word]
+
+    return vector
+
+
+# ==========================================================
+# Manual Cosine Similarity
+# ==========================================================
+
+def cosine_similarity(v1, v2):
+
+    words = set(v1.keys()) | set(v2.keys())
+
+    dot = 0
+    norm1 = 0
+    norm2 = 0
+
+    for word in words:
+
+        a = v1.get(word, 0)
+        b = v2.get(word, 0)
+
+        dot += a * b
+
+        norm1 += a * a
+        norm2 += b * b
+
+    if norm1 == 0 or norm2 == 0:
+        return 0
+
+    return dot / (math.sqrt(norm1) * math.sqrt(norm2))
+
+
+# ==========================================================
+# TF-IDF Similarity
+# ==========================================================
+
+def tfidf_similarity(resume_text, job_text):
+
+    resume_tokens = preprocess(resume_text)
+    job_tokens = preprocess(job_text)
+
+    if not resume_tokens or not job_tokens:
+        return 0
+
+    idf = inverse_document_frequency([
+        resume_tokens,
+        job_tokens
+    ])
+
+    resume_vector = tfidf_vector(
+        resume_tokens,
+        idf
+    )
+
+    job_vector = tfidf_vector(
+        job_tokens,
+        idf
+    )
+
+    similarity = cosine_similarity(
+        resume_vector,
+        job_vector
+    )
+
+    return round(similarity * 100, 2)
+
+
+# ==========================================================
+# Manual Fuzzy Matching
+# ==========================================================
+
+def fuzzy_similarity(
+    resume_items,
+    job_items,
+    threshold=80
+):
+
+    if not job_items:
+        return 100
 
     if not resume_items:
         return 0
@@ -30,8 +172,7 @@ def fuzzy_similarity(resume_items, job_items, threshold=80):
                 job
             )
 
-            if score > best:
-                best = score
+            best = max(best, score)
 
         if best >= threshold:
             matched += 1
@@ -42,11 +183,14 @@ def fuzzy_similarity(resume_items, job_items, threshold=80):
     )
 
 
-# ---------------------------------------------------------
-# Experience
-# ---------------------------------------------------------
+# ==========================================================
+# Experience Score
+# ==========================================================
 
 def experience_score(candidate, required):
+
+    if required == 0:
+        return 100
 
     if candidate >= required:
         return 100
@@ -57,98 +201,100 @@ def experience_score(candidate, required):
     )
 
 
-# ---------------------------------------------------------
-# ATS Score
-# ---------------------------------------------------------
-# Focused on Skills, Education, and Experience only - Projects
-# and Certifications are intentionally excluded, since Skills and
-# Experience are what most directly indicate whether a candidate
-# is qualified for a role.
+# ==========================================================
+# Final ATS Score
+# ==========================================================
 
-def calculate_ats_score(resume_data, job_data):
-    """
-    Only categories where the job side has actual extracted
-    requirements are included in the weighted score. This avoids
-    silently crediting 100% for any category the extractor failed
-    to find in the job description (which was making every resume
-    score ~100% whenever job extraction came back empty for a
-    category).
+def calculate_ats_score(
+    resume_data,
+    job_data
+):
 
-    If NOTHING could be reliably extracted from the job
-    description, we return an ats_score of 0 rather than 100,
-    since an unparseable job description should never read as
-    "perfect match" -- it should surface as something to
-    investigate.
-    """
+    # ------------------------------------------
+    # TF-IDF Skill Similarity
+    # ------------------------------------------
 
-    weights = {
-        "skills": 0.50,
-        "education": 0.20,
-        "experience": 0.30
-    }
+    resume_skill_text = " ".join(
+        resume_data.get("skills", [])
+    )
 
-    thresholds = {
-        "skills": 80,
-        "education": 70
-    }
+    job_skill_text = " ".join(
+        job_data.get("skills", [])
+    )
 
-    raw_scores = {}
-    active_weights = {}
+    tfidf_score = tfidf_similarity(
+        resume_skill_text,
+        job_skill_text
+    )
 
-    for category, threshold in thresholds.items():
+    # ------------------------------------------
+    # Fuzzy Skill Matching (for reporting)
+    # ------------------------------------------
 
-        job_items = job_data.get(category, [])
+    fuzzy_skill_score = fuzzy_similarity(
+        resume_data.get("skills", []),
+        job_data.get("skills", []),
+        threshold=80
+    )
 
-        if job_items:
+    # ------------------------------------------
+    # Blend TF-IDF + Fuzzy
+    # TF-IDF has higher importance
+    # ------------------------------------------
 
-            raw_scores[category] = fuzzy_similarity(
-                resume_data.get(category, []),
-                job_items,
-                threshold=threshold
-            )
+    skills_score = round(
+        tfidf_score * 0.70 +
+        fuzzy_skill_score * 0.30,
+        2
+    )
 
-            active_weights[category] = weights[category]
+    # ------------------------------------------
+    # Education
+    # ------------------------------------------
 
-    required_exp = job_data.get("experience_years", 0)
+    education_score = fuzzy_similarity(
+        resume_data.get("education", []),
+        job_data.get("education", []),
+        threshold=70
+    )
 
-    if required_exp > 0:
+    # ------------------------------------------
+    # Experience
+    # ------------------------------------------
 
-        raw_scores["experience"] = experience_score(
-            resume_data.get("experience_years", 0),
-            required_exp
-        )
+    experience = experience_score(
+        resume_data.get("experience_years", 0),
+        job_data.get("experience_years", 0)
+    )
 
-        active_weights["experience"] = weights["experience"]
+    # ------------------------------------------
+    # Final ATS Score
+    # ------------------------------------------
 
-    if not active_weights:
-
-        return {
-            "ats_score": 0,
-            "skills_score": raw_scores.get("skills", 0),
-            "education_score": raw_scores.get("education", 0),
-            "experience_score": raw_scores.get("experience", 0),
-            "scored_categories": []
-        }
-
-    total_weight = sum(active_weights.values())
-
-    ats = sum(
-        raw_scores[category] * (weight / total_weight)
-        for category, weight in active_weights.items()
+    ats = (
+        skills_score * 0.50 +
+        education_score * 0.20 +
+        experience * 0.30
     )
 
     return {
 
         "ats_score": round(ats, 2),
 
-        "skills_score": round(raw_scores.get("skills", 0), 2),
+        "skills_score": round(skills_score, 2),
 
-        "education_score": round(raw_scores.get("education", 0), 2),
+        "education_score": round(education_score, 2),
 
-        "experience_score": round(raw_scores.get("experience", 0), 2),
+        "experience_score": round(experience, 2),
 
-        # exposed so the UI can show *why* a category was skipped
-        # (e.g. "no education requirement detected in job description")
-        "scored_categories": list(active_weights.keys())
+        "tfidf_score": round(tfidf_score, 2),
+
+        "fuzzy_skill_score": round(fuzzy_skill_score, 2),
+
+        "scored_categories": [
+            "skills",
+            "education",
+            "experience"
+        ]
 
     }

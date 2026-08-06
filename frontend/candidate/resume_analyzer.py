@@ -7,7 +7,7 @@ from api import analyze_resume
 
 def show():
 
-    st.title(" AI Resume Analyzer")
+    st.title("📄 AI Resume Analyzer")
 
     st.write(
         """
@@ -58,6 +58,7 @@ The analyzer evaluates:
                     job_description,
                     st.session_state.token
                 )
+
             finally:
                 os.remove(pdf_path)
 
@@ -78,9 +79,9 @@ The analyzer evaluates:
 
         st.divider()
 
-        # ===================================================
+        # =====================================================
         # ATS SCORE
-        # ===================================================
+        # =====================================================
 
         st.metric(
             "ATS Score",
@@ -91,32 +92,29 @@ The analyzer evaluates:
 
         st.divider()
 
-        # ===================================================
+        # =====================================================
         # SECTION SCORES
-        # ===================================================
+        # =====================================================
 
-        st.subheader(" Section Scores")
+        st.subheader("📊 Section Scores")
 
         scores = result["section_scores"]
 
         c1, c2, c3 = st.columns(3)
 
         with c1:
-
             st.metric(
                 "Skills",
                 f"{scores['skills']}%"
             )
 
         with c2:
-
             st.metric(
                 "Education",
                 f"{scores['education']}%"
             )
 
         with c3:
-
             st.metric(
                 "Experience",
                 f"{scores['experience']}%"
@@ -124,15 +122,15 @@ The analyzer evaluates:
 
         st.divider()
 
-        # ===================================================
-        # MATCHED / MISSING SKILLS
-        # ===================================================
+        # =====================================================
+        # MATCHED SKILLS
+        # =====================================================
 
         left, right = st.columns(2)
 
         with left:
 
-            st.subheader(" Matching Skills")
+            st.subheader("✅ Matching Skills")
 
             if result["matched_skills"]:
 
@@ -144,7 +142,7 @@ The analyzer evaluates:
 
         with right:
 
-            st.subheader(" Missing Skills")
+            st.subheader("❌ Missing Skills")
 
             if result["missing_skills"]:
 
@@ -156,43 +154,68 @@ The analyzer evaluates:
 
         st.divider()
 
-        # ===================================================
-        # MATCHED / MISSING EDUCATION
-        # ===================================================
+        # =====================================================
+        # EDUCATION
+        # =====================================================
 
         left, right = st.columns(2)
 
         with left:
 
-            st.subheader(" Matching Education")
+            st.subheader("✅ Matching Education")
 
             if result["matched_education"]:
 
-                for item in result["matched_education"]:
-                    st.success(item)
+                for edu in result["matched_education"]:
+                    st.success(edu)
 
             else:
-                st.info("No matching education requirements.")
+                st.info("No matching education.")
 
         with right:
 
-            st.subheader(" Missing Education")
+            st.subheader("❌ Missing Education")
 
             if result["missing_education"]:
 
-                for item in result["missing_education"]:
-                    st.error(item)
+                for edu in result["missing_education"]:
+                    st.error(edu)
 
             else:
-                st.success("No missing education requirements.")
+                st.success("No missing education.")
 
         st.divider()
 
-        # ===================================================
-        # RESUME INFORMATION
-        # ===================================================
+        # =====================================================
+        # EXPERIENCE
+        # =====================================================
 
-        st.subheader(" Resume Information")
+        st.subheader("💼 Experience")
+
+        required_exp = result["job_information"]["experience_years"]
+        candidate_exp = result["resume_information"]["experience_years"]
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+            st.metric(
+                "Candidate Experience",
+                f"{candidate_exp} years"
+            )
+
+        with c2:
+            st.metric(
+                "Required Experience",
+                f"{required_exp} years"
+            )
+
+        st.divider()
+
+        # =====================================================
+        # RESUME INFORMATION
+        # =====================================================
+
+        st.subheader("📄 Resume Information")
 
         resume = result["resume_information"]
 
@@ -202,8 +225,13 @@ The analyzer evaluates:
 
             st.write("### Education")
 
-            for item in resume["education"]:
-                st.write("•", item)
+            if resume["education"]:
+
+                for item in resume["education"]:
+                    st.write("•", item)
+
+            else:
+                st.write("No education extracted.")
 
             st.write("### Experience")
 
@@ -215,42 +243,81 @@ The analyzer evaluates:
 
             st.write("### Skills")
 
-            st.write(", ".join(resume["skills"]))
+            if resume["skills"]:
+                st.write(", ".join(resume["skills"]))
+            else:
+                st.write("No skills extracted.")
 
         st.divider()
 
-        # ===================================================
-        # SUGGESTIONS
-        # ===================================================
+        # =====================================================
+        # JOB INFORMATION
+        # =====================================================
 
-        st.subheader(" Suggestions")
+        st.subheader("📋 Job Information")
+
+        job = result["job_information"]
+
+        c1, c2 = st.columns(2)
+
+        with c1:
+
+            st.write("### Required Education")
+
+            if job["education"]:
+
+                for item in job["education"]:
+                    st.write("•", item)
+
+            else:
+                st.write("Not specified.")
+
+            st.write("### Required Experience")
+
+            st.write(
+                f"{job['experience_years']} years"
+            )
+
+        with c2:
+
+            st.write("### Required Skills")
+
+            if job["skills"]:
+                st.write(", ".join(job["skills"]))
+            else:
+                st.write("Not specified.")
+
+        st.divider()
+
+        # =====================================================
+        # SUGGESTIONS
+        # =====================================================
+
+        st.subheader("💡 Suggestions")
 
         for suggestion in result["suggestions"]:
-
             st.info(suggestion)
 
         st.divider()
 
-        # ===================================================
+        # =====================================================
         # FINAL VERDICT
-        # ===================================================
+        # =====================================================
 
         ats = result["ats_score"]
 
         if ats >= 85:
 
-            st.success(
-                " Excellent Match!"
-            )
+            st.success("🟢 Excellent Match!")
 
         elif ats >= 70:
 
-            st.info(
-                " Good Match!"
-            )
+            st.info("🟡 Good Match!")
+
+        elif ats >= 50:
+
+            st.warning("🟠 Average Match")
 
         else:
 
-            st.warning(
-                " Resume needs improvement before applying."
-            )
+            st.error("🔴 Resume needs improvement before applying.")

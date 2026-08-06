@@ -201,9 +201,8 @@ def upload_resume(
     job_data = _build_job_data(job)
 
     scores = calculate_ats_score(
-        resume_data,
-        job_data
-    )
+    resume_data,
+    job_data )
 
     score = scores["ats_score"]
 

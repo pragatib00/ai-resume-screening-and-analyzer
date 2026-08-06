@@ -97,6 +97,7 @@ def analyze_resume(
     job_data = extract_job_information(
         job_description
     )
+
     print("\n================ RESUME DATA ================")
     print(resume_data)
 
@@ -104,16 +105,17 @@ def analyze_resume(
     print(job_data)
 
     # ---------------------------------------------------
-    # Calculate Scores
+    # Calculate ATS Score
     # ---------------------------------------------------
 
     scores = calculate_ats_score(
-        resume_data,
-        job_data
+        resume_data=resume_data,
+        job_data=job_data,
+        
     )
 
     # ---------------------------------------------------
-    # Generate Suggestions
+    # Suggestions
     # ---------------------------------------------------
 
     analysis = generate_suggestions(
@@ -122,9 +124,7 @@ def analyze_resume(
     )
 
     # ---------------------------------------------------
-    # Persist this analysis for admin analytics
-    # (wrapped in try/except so a logging failure never
-    # blocks the candidate from getting their result)
+    # Save Analysis
     # ---------------------------------------------------
 
     try:
@@ -145,7 +145,7 @@ def analyze_resume(
         print(f"Failed to save resume analysis record: {e}")
 
     # ---------------------------------------------------
-    # Final Response
+    # Response
     # ---------------------------------------------------
 
     return {

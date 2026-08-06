@@ -443,7 +443,7 @@ def show():
     # System Health
     # ---------------------------------
 
-    st.subheader("System Health — Extraction Failures")
+    st.subheader("System Health, Extraction Failures")
 
     logs_response = get_error_logs(token, limit=50)
 

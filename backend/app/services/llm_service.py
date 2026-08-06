@@ -21,14 +21,8 @@ def query_llm(prompt):
 
     return response.json()["response"]
 
+
 def flatten_items(items):
-    """
-    Safety net: some LLM responses group items under a category
-    label instead of listing them individually, e.g.
-    "Programming: Python(NumPy, Pandas)" instead of separate
-    "Python", "NumPy", "Pandas" entries. This breaks fuzzy
-    token matching downstream, so we split those apart here.
-    """
 
     flattened = []
 
@@ -37,11 +31,9 @@ def flatten_items(items):
         if not isinstance(item, str):
             continue
 
-        # Drop a leading "Category:" label if present
         if ":" in item:
             item = item.split(":", 1)[1]
 
-        # Split on common separators used to group items together
         for piece in re.split(r"[,\(\)/]", item):
 
             piece = piece.strip()
@@ -49,71 +41,161 @@ def flatten_items(items):
             if piece:
                 flattened.append(piece)
 
-    return flattened
+    # remove duplicates while preserving order
+
+    seen = set()
+    result = []
+
+    for item in flattened:
+
+        key = item.lower()
+
+        if key not in seen:
+
+            seen.add(key)
+            result.append(item)
+
+    return result
 
 
 def extract_list(text, instruction, retries=1):
 
     prompt = f"""
-You are an ATS parser.
+You are an expert ATS Resume Parser.
+
+Resume / Job Description:
 
 {text}
+
+Task:
 
 {instruction}
 
 Rules:
-- Return ONLY a flat JSON array of individual items.
-- Do NOT group items under a category label (e.g. do NOT write "Programming: Python, NumPy").
-- Do NOT combine multiple items into one string.
-- Each item must be a single, standalone value with no parentheses, colons, or commas inside it.
+
+1. Return ONLY a JSON array.
+
+2. Every element must be ONE individual item.
+
+3. Never combine multiple skills into one string.
+
+4. Remove duplicates.
+
+5. Ignore soft skills.
+
+6. Include ALL technical skills.
+
+Technical skills include:
+
+- Programming Languages
+- Libraries
+- Frameworks
+- Databases
+- Developer Tools
+- Cloud Platforms
+- Technologies
+- APIs
+
+VERY IMPORTANT:
+
+If a resume contains
+
+Programming Languages:
+Python
+
+Libraries:
+Pandas
+NumPy
+Scikit-learn
+
+Return
+
+[
+"Python",
+"Pandas",
+"NumPy",
+"Scikit-learn"
+]
+
+If the resume contains
+
+Python (Pandas, NumPy, Matplotlib)
+
+Return
+
+[
+"Python",
+"Pandas",
+"NumPy",
+"Matplotlib"
+]
+
+If the resume contains
+
+Programming:
+Python, SQL
+
+Return
+
+[
+"Python",
+"SQL"
+]
+
+Do NOT omit the programming language.
+
+Do NOT explain anything.
+
+Return ONLY valid JSON.
 
 Example:
 
 [
-    "Python",
-    "SQL",
-    "Machine Learning"
+"Python",
+"SQL",
+"Pandas",
+"NumPy",
+"Machine Learning"
 ]
 """
 
     last_error = None
 
-    # An empty result from a single LLM call is ambiguous: it could
-    # genuinely mean "no items", or it could mean the model produced
-    # unparseable output. We retry a couple of times before accepting
-    # an empty result, and log clearly when we give up, so a silent
-    # extraction failure doesn't get treated as "requirement met" by
-    # the scoring layer.
     for attempt in range(retries + 1):
 
         try:
+
             response = query_llm(prompt)
 
             start = response.find("[")
             end = response.rfind("]") + 1
 
             if start == -1 or end <= start:
-                raise ValueError(f"No JSON array found in LLM response: {response!r}")
 
-            raw_items = json.loads(response[start:end])
+                raise ValueError("No JSON array found.")
+
+            raw_items = json.loads(
+                response[start:end]
+            )
 
             items = flatten_items(raw_items)
 
             if items:
+
                 return items
 
-            # Empty but technically valid JSON -- retry before accepting it
-            last_error = "LLM returned an empty array"
+            last_error = "Empty array"
 
         except Exception as e:
+
             last_error = e
 
     print(
-        f"extract_list: giving up after {retries + 1} attempt(s), "
-        f"returning empty list. Last error: {last_error}"
+        f"extract_list: giving up after {retries+1} attempts. Last error: {last_error}"
     )
 
     return []
+
 
 def extract_integer(text, instruction, retries=1):
 
@@ -134,83 +216,128 @@ Example:
     for attempt in range(retries + 1):
 
         try:
+
             response = query_llm(prompt)
 
             match = re.search(r"\d+", response)
 
             if match:
+
                 return int(match.group())
 
-            last_error = f"No integer found in LLM response: {response!r}"
+            last_error = "No integer found."
 
         except Exception as e:
+
             last_error = e
 
     print(
-        f"extract_integer: giving up after {retries + 1} attempt(s), "
-        f"returning 0. Last error: {last_error}"
+        f"extract_integer: giving up after {retries+1} attempts. Last error: {last_error}"
     )
 
     return 0
+
 
 def extract_resume_information(text):
 
     return {
 
         "skills": extract_list(
+
             text,
-            "Extract ONLY technical skills. Ignore soft skills."
+
+            """
+Extract ALL technical skills.
+
+Include:
+
+- Programming Languages
+- Libraries
+- Frameworks
+- Databases
+- Developer Tools
+- Technologies
+- APIs
+
+Do NOT ignore programming languages.
+
+If Python is listed as a programming language,
+include Python.
+
+Return ONLY technical skills.
+"""
         ),
 
         "education": extract_list(
-            text,
-            "Extract ONLY degree names."
-        ),
 
-        "projects": extract_list(
             text,
-            "Extract ONLY project titles."
-        ),
 
-        "certifications": extract_list(
-            text,
-            "Extract ONLY certification names."
+            """
+Extract ONLY degree names.
+
+Examples:
+
+B.Sc. in Computer Science
+
+B.E. Software Engineering
+
+M.Sc. Data Science
+
+Return only degrees.
+"""
         ),
 
         "experience_years": extract_integer(
+
             text,
+
             "How many years of professional experience does this resume show?"
+
         )
 
     }
+
 
 def extract_job_information(text):
 
     return {
 
         "skills": extract_list(
+
             text,
-            "Extract ONLY required technical skills."
+
+            """
+Extract ALL required technical skills.
+
+Include:
+
+- Programming Languages
+- Libraries
+- Frameworks
+- Databases
+- Developer Tools
+- Technologies
+- APIs
+
+Return ONLY technical skills.
+"""
         ),
 
         "education": extract_list(
-            text,
-            "Extract ONLY required degree names."
-        ),
 
-        "projects": extract_list(
             text,
-            "Extract ONLY required project types if mentioned."
-        ),
 
-        "certifications": extract_list(
-            text,
-            "Extract ONLY required certifications."
+            """
+Extract ONLY required degree names.
+"""
         ),
 
         "experience_years": extract_integer(
+
             text,
-            "How many years of experience are required?"
+
+            "How many years of professional experience are required?"
+
         )
 
     }

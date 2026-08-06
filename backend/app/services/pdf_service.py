@@ -11,9 +11,7 @@ except LookupError:
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
-    """
-    Extract text from every page of a PDF.
-    """
+    
 
     document = fitz.open(pdf_path)
 
@@ -29,9 +27,6 @@ def extract_text_from_pdf(pdf_path: str) -> str:
 
 
 def clean_text(text: str) -> str:
-    """
-    Basic text cleaning before sending to the LLM.
-    """
 
     text = text.lower()
 
