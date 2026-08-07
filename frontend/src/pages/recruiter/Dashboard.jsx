@@ -51,8 +51,9 @@ function RecruiterDashboard() {
 
           <Link to="/recruiter/jobs/new" className="relative shrink-0">
             <Button
+              variant="secondary"
               icon={PlusCircle}
-              className="bg-white text-blue-700 hover:bg-blue-50 shadow-none"
+              className="!bg-white !text-blue-600 !font-semibold border-0 hover:!bg-blue-50 shadow-lg shadow-blue-900/20"
             >
               Post a Job
             </Button>
