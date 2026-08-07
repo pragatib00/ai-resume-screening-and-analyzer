@@ -1,6 +1,7 @@
+import { ChevronRight } from "lucide-react";
 import Card from "./Card";
 
-function StatCard({ icon: Icon, label, value, tone = "blue", trend }) {
+function StatCard({ icon: Icon, label, value, tone = "blue", trend, onClick }) {
   const tones = {
     blue: "bg-blue-50 text-blue-600",
     green: "bg-emerald-50 text-emerald-600",
@@ -10,7 +11,11 @@ function StatCard({ icon: Icon, label, value, tone = "blue", trend }) {
   };
 
   return (
-    <Card hoverable className="flex items-center gap-4">
+    <Card
+      hoverable
+      className={`flex items-center gap-4 ${onClick ? "cursor-pointer group" : ""}`}
+      onClick={onClick}
+    >
       {Icon && (
         <div
           className={`w-12 h-12 shrink-0 rounded-2xl flex items-center justify-center transition-transform ${tones[tone]}`}
@@ -19,13 +24,20 @@ function StatCard({ icon: Icon, label, value, tone = "blue", trend }) {
         </div>
       )}
 
-      <div className="min-w-0">
+      <div className="min-w-0 flex-1">
         <p className="text-sm text-slate-500 truncate">{label}</p>
         <p className="text-2xl font-bold text-slate-900 tracking-tight">
           {value}
         </p>
         {trend && <p className="text-xs text-slate-400 mt-0.5">{trend}</p>}
       </div>
+
+      {onClick && (
+        <ChevronRight
+          size={18}
+          className="text-slate-300 shrink-0 transition-transform group-hover:translate-x-0.5 group-hover:text-slate-400"
+        />
+      )}
     </Card>
   );
 }
