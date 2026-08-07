@@ -340,6 +340,56 @@ def get_applicants(
 
 
 # =====================================================
+# Recruiter: All Applicants Across Jobs (optionally
+# filtered by status), used by the dashboard drill-down.
+# =====================================================
+
+@router.get(
+    "/recruiter",
+    response_model=list[schemas.RecruiterApplicationResponse]
+)
+def get_recruiter_applicants(
+
+    status: str | None = None,
+
+    db: Session = Depends(get_db),
+
+    current_user: models.User = Depends(get_current_user)
+
+):
+
+    if current_user.role != "recruiter":
+
+        raise HTTPException(
+            status_code=403,
+            detail="Only recruiters."
+        )
+
+    job_ids = [
+        job.id
+        for job in db.query(models.Job).filter(
+            models.Job.posted_by == current_user.id
+        ).all()
+    ]
+
+    query = db.query(
+        models.Application
+    ).filter(
+        models.Application.job_id.in_(job_ids)
+    )
+
+    if status:
+
+        query = query.filter(
+            models.Application.status == status
+        )
+
+    return query.order_by(
+        models.Application.match_score.desc()
+    ).all()
+
+
+# =====================================================
 # Recruiter: Detailed Applicant Analysis
 # =====================================================
 
