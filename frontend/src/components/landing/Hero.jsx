@@ -53,7 +53,7 @@ function Hero() {
 
           <div className="mt-8 flex items-center gap-2 text-sm text-slate-500">
             <ShieldCheck size={16} className="text-blue-600" />
-            Free to get started &mdash; no credit card required.
+            Free to get started - no credit card required.
           </div>
         </div>
 
