@@ -1,9 +1,9 @@
 import { Search, Bell, TrendingUp, Users, Briefcase } from "lucide-react";
 
 const CANDIDATES = [
-  { name: "Sarah Chen", score: 94 },
-  { name: "Michael Brooks", score: 87 },
-  { name: "Priya Patel", score: 76 },
+  { name: "Pragati Basnet", score: 94 },
+  { name: "Orisha Shakya", score: 91 },
+  { name: "Pragati Lama", score: 87},
 ];
 
 function initials(name) {

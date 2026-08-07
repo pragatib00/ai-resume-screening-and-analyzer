@@ -7,6 +7,12 @@ import Logo from "../../components/ui/Logo";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import Alert from "../../components/ui/Alert";
+import {
+  validateName,
+  validateEmail,
+  validatePassword,
+  validateRequired,
+} from "../../utils/validators";
 
 const ROLES = [
   { value: "candidate", label: "Candidate", icon: UserRound },
@@ -29,15 +35,42 @@ function Register() {
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
 
   const handleChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
+    const { name, value } = e.target;
+    setFormData({ ...formData, [name]: value });
+    if (fieldErrors[name]) {
+      setFieldErrors({ ...fieldErrors, [name]: "" });
+    }
+  };
+
+  const validate = () => {
+    const errors = {
+      name: validateName(formData.name),
+      email: validateEmail(formData.email),
+      password: validatePassword(formData.password),
+    };
+
+    if (formData.role === "admin") {
+      errors.admin_secret = validateRequired(formData.admin_secret, "Admin secret key");
+    }
+
+    const cleaned = Object.fromEntries(
+      Object.entries(errors).filter(([, v]) => v)
+    );
+
+    setFieldErrors(cleaned);
+    return Object.keys(cleaned).length === 0;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
     setSuccess("");
+
+    if (!validate()) return;
+
     setLoading(true);
 
     try {
@@ -111,6 +144,7 @@ function Register() {
                 required
                 value={formData.name}
                 onChange={handleChange}
+                error={fieldErrors.name}
                 placeholder="Jane Doe"
               />
 
@@ -121,6 +155,7 @@ function Register() {
                 required
                 value={formData.email}
                 onChange={handleChange}
+                error={fieldErrors.email}
                 placeholder="you@example.com"
               />
 
@@ -129,10 +164,10 @@ function Register() {
                 type="password"
                 name="password"
                 required
-                minLength={6}
                 value={formData.password}
                 onChange={handleChange}
-                placeholder="••••••••"
+                error={fieldErrors.password}
+                placeholder="At least 8 characters, with a letter and a number"
               />
 
               <div>
@@ -176,6 +211,7 @@ function Register() {
                   required
                   value={formData.admin_secret}
                   onChange={handleChange}
+                  error={fieldErrors.admin_secret}
                   placeholder="Provided by the platform owner"
                 />
               )}

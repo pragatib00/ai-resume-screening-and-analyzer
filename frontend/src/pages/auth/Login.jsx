@@ -6,6 +6,7 @@ import Logo from "../../components/ui/Logo";
 import Input from "../../components/ui/Input";
 import Button from "../../components/ui/Button";
 import Alert from "../../components/ui/Alert";
+import { validateEmail, validateRequired } from "../../utils/validators";
 
 function Login() {
   const { login, roleHome } = useAuth();
@@ -16,10 +17,28 @@ function Login() {
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
+  const [fieldErrors, setFieldErrors] = useState({});
+
+  const validate = () => {
+    const errors = {
+      email: validateEmail(email),
+      password: validateRequired(password, "Password"),
+    };
+
+    const cleaned = Object.fromEntries(
+      Object.entries(errors).filter(([, v]) => v)
+    );
+
+    setFieldErrors(cleaned);
+    return Object.keys(cleaned).length === 0;
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+
+    if (!validate()) return;
+
     setLoading(true);
 
     try {
@@ -76,7 +95,11 @@ function Login() {
                 type="email"
                 required
                 value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                onChange={(e) => {
+                  setEmail(e.target.value);
+                  if (fieldErrors.email) setFieldErrors({ ...fieldErrors, email: "" });
+                }}
+                error={fieldErrors.email}
                 placeholder="you@example.com"
               />
 
@@ -85,7 +108,11 @@ function Login() {
                 type="password"
                 required
                 value={password}
-                onChange={(e) => setPassword(e.target.value)}
+                onChange={(e) => {
+                  setPassword(e.target.value);
+                  if (fieldErrors.password) setFieldErrors({ ...fieldErrors, password: "" });
+                }}
+                error={fieldErrors.password}
                 placeholder="••••••••"
               />
 

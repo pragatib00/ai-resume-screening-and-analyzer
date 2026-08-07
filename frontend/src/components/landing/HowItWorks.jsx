@@ -33,7 +33,7 @@ function HowItWorks() {
 
 
   return (
-    <section className="py-24 bg-slate-50">
+    <section id="how-it-works" className="py-24 bg-slate-50 scroll-mt-20">
 
       <div className="max-w-6xl mx-auto px-6 text-center">
 

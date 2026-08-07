@@ -10,10 +10,15 @@ import {
   ShieldCheck,
   ScrollText,
   ArrowRight,
+  Gauge,
 } from "lucide-react";
 import {
   BarChart,
   Bar,
+  PieChart,
+  Pie,
+  Cell,
+  Legend,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -53,6 +58,12 @@ const QUICK_LINKS = [
     tone: "red",
   },
 ];
+
+const COLORS = {
+  blue: "#2563EB",
+  orange: "#F97316",
+  violet: "#7C3AED",
+};
 
 function Dashboard() {
   const toast = useToast();
@@ -134,6 +145,12 @@ function Dashboard() {
                 value={analytics.total_analyses}
                 tone="blue"
               />
+              <StatCard
+                icon={Gauge}
+                label="Avg. ATS Score"
+                value={`${analytics.average_ats_score}%`}
+                tone="purple"
+              />
             </div>
 
             <div className="grid sm:grid-cols-3 gap-5">
@@ -169,6 +186,90 @@ function Dashboard() {
               })}
             </div>
 
+            <div className="grid lg:grid-cols-5 gap-5">
+              <Card className="lg:col-span-2">
+                <h3 className="font-semibold text-slate-900 mb-1">
+                  User Distribution
+                </h3>
+                <p className="text-sm text-slate-500 mb-4">
+                  Candidates vs. recruiters on the platform.
+                </p>
+
+                {stats.total_candidates + stats.total_recruiters === 0 ? (
+                  <EmptyState
+                    icon={Users}
+                    title="No users yet"
+                    description="This chart fills in once people start signing up."
+                  />
+                ) : (
+                  <div className="h-64">
+                    <ResponsiveContainer width="100%" height="100%">
+                      <PieChart>
+                        <Pie
+                          data={[
+                            { name: "Candidates", value: stats.total_candidates },
+                            { name: "Recruiters", value: stats.total_recruiters },
+                          ]}
+                          dataKey="value"
+                          nameKey="name"
+                          innerRadius={55}
+                          outerRadius={85}
+                          paddingAngle={3}
+                          cornerRadius={6}
+                        >
+                          <Cell fill={COLORS.blue} />
+                          <Cell fill={COLORS.orange} />
+                        </Pie>
+                        <Tooltip
+                          contentStyle={{ borderRadius: 12, border: "1px solid #E2E8F0" }}
+                        />
+                        <Legend
+                          verticalAlign="bottom"
+                          height={32}
+                          formatter={(value) => (
+                            <span className="text-xs text-slate-600">{value}</span>
+                          )}
+                        />
+                      </PieChart>
+                    </ResponsiveContainer>
+                  </div>
+                )}
+              </Card>
+
+              <Card className="lg:col-span-3">
+                <h3 className="font-semibold text-slate-900 mb-1">
+                  Platform Activity
+                </h3>
+                <p className="text-sm text-slate-500 mb-4">
+                  Jobs posted, applications received and analyses run.
+                </p>
+
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart
+                      data={[
+                        { label: "Jobs Posted", value: stats.total_jobs },
+                        { label: "Applications", value: stats.total_applications },
+                        { label: "Analyses Run", value: analytics.total_analyses },
+                      ]}
+                      margin={{ top: 16, left: 0, right: 0 }}
+                    >
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                      <XAxis dataKey="label" stroke="#94A3B8" fontSize={12} />
+                      <YAxis allowDecimals={false} stroke="#94A3B8" fontSize={12} />
+                      <Tooltip
+                        cursor={{ fill: "#F1F5F9" }}
+                        contentStyle={{ borderRadius: 12, border: "1px solid #E2E8F0" }}
+                      />
+                      <Bar dataKey="value" fill={COLORS.blue} radius={[6, 6, 0, 0]} maxBarSize={64}>
+                        <LabelList dataKey="value" position="top" fill="#475569" fontSize={12} />
+                      </Bar>
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              </Card>
+            </div>
+
             <Card>
               <h3 className="font-semibold text-slate-900 mb-1">
                 Top Missing Skills Across Analyses
@@ -188,31 +289,31 @@ function Dashboard() {
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart
                       data={analytics.top_missing_skills}
-                      layout="vertical"
-                      margin={{ left: 12, right: 20 }}
+                      margin={{ top: 16, left: 0, right: 12, bottom: 32 }}
                     >
-                      <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#E2E8F0" />
-                      <XAxis type="number" allowDecimals={false} stroke="#94A3B8" fontSize={12} />
-                      <YAxis
-                        type="category"
+                      <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#E2E8F0" />
+                      <XAxis
                         dataKey="skill"
-                        width={110}
                         stroke="#94A3B8"
                         fontSize={12}
+                        angle={-35}
+                        textAnchor="end"
+                        interval={0}
                       />
+                      <YAxis allowDecimals={false} stroke="#94A3B8" fontSize={12} />
                       <Tooltip
                         cursor={{ fill: "#F1F5F9" }}
                         contentStyle={{ borderRadius: 12, border: "1px solid #E2E8F0" }}
                       />
                       <Bar
                         dataKey="count"
-                        fill="#2563EB"
-                        radius={[0, 6, 6, 0]}
-                        maxBarSize={28}
+                        fill={COLORS.blue}
+                        radius={[6, 6, 0, 0]}
+                        maxBarSize={48}
                       >
                         <LabelList
                           dataKey="count"
-                          position="right"
+                          position="top"
                           fill="#475569"
                           fontSize={12}
                         />
