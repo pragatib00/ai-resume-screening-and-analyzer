@@ -647,6 +647,33 @@ def recruiter_analytics(
 
         )
 
+    applications_by_job = {}
+
+    for app in applications:
+        applications_by_job.setdefault(app.job_id, []).append(app)
+
+    by_job = []
+
+    for job in jobs:
+
+        job_applications = applications_by_job.get(job.id, [])
+
+        job_avg_score = round(
+            sum(a.match_score for a in job_applications) / len(job_applications),
+            2
+        ) if job_applications else 0
+
+        by_job.append({
+            "job_id": job.id,
+            "title": job.title,
+            "applications": len(job_applications),
+            "average_score": job_avg_score,
+            "shortlisted": len([a for a in job_applications if a.status == "Shortlisted"]),
+        })
+
+    # Most-applied-to jobs first, so charts show the jobs that matter.
+    by_job.sort(key=lambda j: j["applications"], reverse=True)
+
     return {
 
         "jobs_posted": len(jobs),
@@ -659,6 +686,8 @@ def recruiter_analytics(
 
         "pending": pending,
 
-        "average_score": average_score
+        "average_score": average_score,
+
+        "by_job": by_job
 
     }
