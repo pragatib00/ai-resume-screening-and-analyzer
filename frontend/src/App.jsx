@@ -16,6 +16,7 @@ import RecruiterDashboard from "./pages/recruiter/Dashboard";
 import MyJobs from "./pages/recruiter/MyJobs";
 import JobForm from "./pages/recruiter/JobForm";
 import Applicants from "./pages/recruiter/Applicants";
+import AllApplicants from "./pages/recruiter/AllApplicants";
 
 import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
@@ -102,6 +103,14 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["recruiter"]}>
                 <Applicants />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/recruiter/applicants"
+            element={
+              <ProtectedRoute allowedRoles={["recruiter"]}>
+                <AllApplicants />
               </ProtectedRoute>
             }
           />

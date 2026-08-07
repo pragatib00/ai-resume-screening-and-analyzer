@@ -15,6 +15,9 @@ export const getMyApplications = () => api.get("/applications/my");
 
 export const getApplicants = (jobId) => api.get(`/applications/job/${jobId}`);
 
+export const getRecruiterApplicants = (status) =>
+  api.get("/applications/recruiter", { params: status ? { status } : {} });
+
 export const getApplicantAnalysis = (applicationId) =>
   api.get(`/applications/${applicationId}/analysis`);
 

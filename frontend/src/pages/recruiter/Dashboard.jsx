@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import {
   Briefcase,
   FileStack,
@@ -21,6 +21,7 @@ import { getRecruiterAnalytics } from "../../services/applicationService";
 function RecruiterDashboard() {
   const { user } = useAuth();
   const toast = useToast();
+  const navigate = useNavigate();
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
 
@@ -66,12 +67,19 @@ function RecruiterDashboard() {
           </div>
         ) : (
           <div className="grid sm:grid-cols-2 xl:grid-cols-3 gap-5">
-            <StatCard icon={Briefcase} label="Jobs Posted" value={stats.jobs_posted} tone="blue" />
+            <StatCard
+              icon={Briefcase}
+              label="Jobs Posted"
+              value={stats.jobs_posted}
+              tone="blue"
+              onClick={() => navigate("/recruiter/jobs")}
+            />
             <StatCard
               icon={FileStack}
               label="Total Applications"
               value={stats.applications}
               tone="purple"
+              onClick={() => navigate("/recruiter/applicants")}
             />
             <StatCard
               icon={Target}
@@ -84,9 +92,22 @@ function RecruiterDashboard() {
               label="Shortlisted"
               value={stats.shortlisted}
               tone="green"
+              onClick={() => navigate("/recruiter/applicants?status=Shortlisted")}
             />
-            <StatCard icon={Clock} label="Pending Review" value={stats.pending} tone="amber" />
-            <StatCard icon={XCircle} label="Rejected" value={stats.rejected} tone="red" />
+            <StatCard
+              icon={Clock}
+              label="Pending Review"
+              value={stats.pending}
+              tone="amber"
+              onClick={() => navigate("/recruiter/applicants?status=Pending")}
+            />
+            <StatCard
+              icon={XCircle}
+              label="Rejected"
+              value={stats.rejected}
+              tone="red"
+              onClick={() => navigate("/recruiter/applicants?status=Rejected")}
+            />
           </div>
         )}
       </div>
