@@ -3,17 +3,21 @@ import Card from "../ui/Card";
 import Badge from "../ui/Badge";
 import Button from "../ui/Button";
 
-function JobCard({ job, applied, onApply }) {
+function JobCard({ job, applied, onApply, onView }) {
   const skills = (job.required_skills || "")
     .split(",")
     .map((s) => s.trim())
     .filter(Boolean);
 
   return (
-    <Card hoverable className="flex flex-col h-full">
+    <Card
+      hoverable
+      className="flex flex-col h-full cursor-pointer"
+      onClick={() => onView(job)}
+    >
       <div className="flex items-start justify-between gap-3">
         <div className="min-w-0">
-          <h3 className="text-base font-semibold text-slate-900 truncate">
+          <h3 className="text-base font-semibold text-slate-900 truncate hover:text-blue-600 transition-colors">
             {job.title}
           </h3>
 
@@ -41,13 +45,30 @@ function JobCard({ job, applied, onApply }) {
         </div>
       )}
 
-      <div className="mt-5 pt-4 border-t border-slate-100">
+      <div className="mt-5 pt-4 border-t border-slate-100 flex items-center gap-2">
+        <Button
+          variant="secondary"
+          className="flex-1"
+          onClick={(e) => {
+            e.stopPropagation();
+            onView(job);
+          }}
+        >
+          View Details
+        </Button>
+
         {applied ? (
-          <div className="flex items-center justify-center gap-2 text-emerald-600 text-sm font-medium py-2.5">
+          <div className="flex-1 flex items-center justify-center gap-2 text-emerald-600 text-sm font-medium py-2.5">
             <CheckCircle2 size={16} /> Applied
           </div>
         ) : (
-          <Button className="w-full" onClick={() => onApply(job)}>
+          <Button
+            className="flex-1"
+            onClick={(e) => {
+              e.stopPropagation();
+              onApply(job);
+            }}
+          >
             Apply Now
           </Button>
         )}
