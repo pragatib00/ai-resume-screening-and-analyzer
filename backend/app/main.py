@@ -9,7 +9,9 @@ from app.routers import (
     jobs,
     applications,
     resume_analyzer,
-    admin
+    admin,
+    contact,
+    notifications
 )
 
 Base.metadata.create_all(bind=engine)
@@ -40,6 +42,8 @@ app.include_router(jobs.router)
 app.include_router(applications.router)
 app.include_router(resume_analyzer.router)
 app.include_router(admin.router)
+app.include_router(contact.router)
+app.include_router(notifications.router)
 
 @app.get("/")
 def home():

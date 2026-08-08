@@ -97,6 +97,16 @@ def apply_job(
 
     db.add(new_application)
 
+    if job.posted_by:
+        db.add(
+            models.Notification(
+                user_id=job.posted_by,
+                type="new_applicant",
+                message=f"{current_user.name} applied to {job.title}.",
+                link=f"/recruiter/jobs/{job.id}/applicants"
+            )
+        )
+
     db.commit()
 
     db.refresh(new_application)
@@ -563,6 +573,15 @@ def update_status(
         )
 
     application.status = status_update.status
+
+    db.add(
+        models.Notification(
+            user_id=application.candidate_id,
+            type="status_change",
+            message=f"Your application for {job.title} was updated to \"{application.status}\".",
+            link="/candidate/applications"
+        )
+    )
 
     db.commit()
 

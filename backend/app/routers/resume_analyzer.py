@@ -124,31 +124,10 @@ def analyze_resume(
     )
 
     # ---------------------------------------------------
-    # Save Analysis
-    # ---------------------------------------------------
-
-    try:
-
-        db.add(
-            models.ResumeAnalysis(
-                candidate_id=current_user.id,
-                ats_score=scores["ats_score"],
-                missing_skills=json.dumps(
-                    analysis["missing_skills"]
-                )
-            )
-        )
-
-        db.commit()
-
-    except Exception as e:
-        print(f"Failed to save resume analysis record: {e}")
-
-    # ---------------------------------------------------
     # Response
     # ---------------------------------------------------
 
-    return {
+    result = {
 
         "ats_score": scores["ats_score"],
 
@@ -177,3 +156,76 @@ def analyze_resume(
         "suggestions": analysis["suggestions"]
 
     }
+
+    # ---------------------------------------------------
+    # Save Analysis
+    # ---------------------------------------------------
+
+    try:
+
+        db.add(
+            models.ResumeAnalysis(
+                candidate_id=current_user.id,
+                ats_score=scores["ats_score"],
+                missing_skills=json.dumps(
+                    analysis["missing_skills"]
+                ),
+                full_result=json.dumps(result)
+            )
+        )
+
+        db.commit()
+
+    except Exception as e:
+        print(f"Failed to save resume analysis record: {e}")
+
+    return result
+
+
+@router.get(
+    "/history",
+    response_model=list[schemas.ResumeHistoryItem]
+)
+def get_resume_history(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    records = (
+        db.query(models.ResumeAnalysis)
+        .filter(models.ResumeAnalysis.candidate_id == current_user.id)
+        .order_by(models.ResumeAnalysis.created_at.desc())
+        .all()
+    )
+
+    return [
+        schemas.ResumeHistoryItem(
+            id=record.id,
+            ats_score=record.ats_score,
+            created_at=record.created_at,
+            has_details=bool(record.full_result)
+        )
+        for record in records
+    ]
+
+
+@router.get(
+    "/history/{analysis_id}",
+    response_model=schemas.ResumeAnalysisResponse
+)
+def get_resume_history_detail(
+    analysis_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    record = db.query(models.ResumeAnalysis).filter(
+        models.ResumeAnalysis.id == analysis_id,
+        models.ResumeAnalysis.candidate_id == current_user.id
+    ).first()
+
+    if record is None or not record.full_result:
+        raise HTTPException(
+            status_code=404,
+            detail="Analysis details not found."
+        )
+
+    return json.loads(record.full_result)
