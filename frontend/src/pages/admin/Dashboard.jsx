@@ -144,6 +144,7 @@ function Dashboard() {
                 label="Resume Analyses Run"
                 value={analytics.total_analyses}
                 tone="blue"
+                onClick={() => navigate("/admin/resume-analyses")}
               />
               <StatCard
                 icon={Gauge}

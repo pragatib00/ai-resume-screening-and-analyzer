@@ -14,7 +14,7 @@ const VALUES = [
     icon: Target,
     title: "Fair Matching",
     description:
-      "Every score is explainable — candidates and recruiters see exactly why a match works.",
+      "Every score is explainable, candidates and recruiters see exactly why a match works.",
   },
   {
     icon: ShieldCheck,
@@ -26,7 +26,7 @@ const VALUES = [
     icon: Users,
     title: "People First",
     description:
-      "Behind every resume is a person — our goal is to get them in front of the right opportunity.",
+      "Behind every resume is a person , our goal is to get them in front of the right opportunity.",
   },
 ];
 
@@ -58,7 +58,7 @@ function About() {
           </h1>
           <p className="mt-5 text-lg text-blue-100 max-w-2xl mx-auto">
             ResumeIQ helps recruiters screen candidates faster and helps job
-            seekers understand exactly how well their resume fits a role —
+            seekers understand exactly how well their resume fits a role -
             using AI-driven analysis instead of guesswork.
           </p>
         </div>
@@ -71,8 +71,8 @@ function About() {
             <p className="mt-4 text-slate-600 leading-relaxed">
               Traditional resume screening is slow, inconsistent and easy to
               get wrong. We built ResumeIQ to give recruiters an AI-powered
-              second opinion — one that reads every resume the same way,
-              every time — and to give candidates clear, actionable feedback
+              second opinion, one that reads every resume the same way,
+              every time - and to give candidates clear, actionable feedback
               on how to improve their chances.
             </p>
             <p className="mt-4 text-slate-600 leading-relaxed">

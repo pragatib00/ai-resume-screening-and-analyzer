@@ -1,12 +1,13 @@
-import { NavLink } from "react-router-dom";
-import { LogOut } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
 import Logo from "../components/ui/Logo";
 
-function Sidebar({ navItems, onLogoutClick }) {
+function Sidebar({ navItems }) {
   return (
     <aside className="hidden lg:flex w-64 shrink-0 flex-col border-r border-slate-200 bg-white h-screen sticky top-0">
       <div className="px-6 py-6 border-b border-slate-100">
-        <Logo />
+        <Link to="/">
+          <Logo />
+        </Link>
       </div>
 
       <nav className="flex-1 px-3 py-6 space-y-1 overflow-y-auto">
@@ -28,16 +29,6 @@ function Sidebar({ navItems, onLogoutClick }) {
           </NavLink>
         ))}
       </nav>
-
-      <div className="px-3 py-4 border-t border-slate-100">
-        <button
-          onClick={onLogoutClick}
-          className="flex w-full items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition"
-        >
-          <LogOut size={18} />
-          Log Out
-        </button>
-      </div>
     </aside>
   );
 }

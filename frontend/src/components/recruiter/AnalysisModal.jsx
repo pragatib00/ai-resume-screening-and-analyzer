@@ -47,7 +47,7 @@ function SkillList({ title, icon: Icon, items, tone }) {
   );
 }
 
-function AnalysisModal({ applicant, open, onClose }) {
+function AnalysisModal({ applicant, open, onClose, onAnalyzed }) {
   const toast = useToast();
   const [analysis, setAnalysis] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -57,13 +57,17 @@ function AnalysisModal({ applicant, open, onClose }) {
     if (!open || !applicant) return;
 
     getApplicantAnalysis(applicant.id)
-      .then((res) => setAnalysis(res.data))
+      .then((res) => {
+        setAnalysis(res.data);
+        onAnalyzed?.(applicant.id, res.data.ats_score);
+      })
       .catch((err) => {
         const message = err.response?.data?.detail || "Failed to load analysis.";
         setError(message);
         toast.error(message);
       })
       .finally(() => setLoading(false));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [open, applicant, toast]);
 
   if (!applicant) return null;
@@ -72,7 +76,7 @@ function AnalysisModal({ applicant, open, onClose }) {
     <Modal
       open={open}
       onClose={onClose}
-      title={`${applicant.candidate.name} — Analysis`}
+      title={`${applicant.candidate.name}, Analysis`}
       size="lg"
     >
       {loading ? (

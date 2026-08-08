@@ -17,6 +17,8 @@ function Navbar() {
   const location = useLocation();
   const [open, setOpen] = useState(false);
 
+  const isLanding = location.pathname === "/";
+
   const isActive = (to) => {
     if (to === "/") return location.pathname === "/" && !location.hash;
     if (to.startsWith("/#")) return false;
@@ -24,7 +26,11 @@ function Navbar() {
   };
 
   return (
-    <nav className="sticky top-0 z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-100">
+    <nav
+      className={`${
+        isLanding ? "sticky top-0" : ""
+      } z-50 w-full bg-white/80 backdrop-blur-md border-b border-slate-100`}
+    >
       <div className="max-w-7xl mx-auto px-6 lg:px-8 h-20 flex items-center justify-between">
         <Link to="/" onClick={() => setOpen(false)}>
           <Logo />

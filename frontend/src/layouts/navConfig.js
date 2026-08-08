@@ -8,6 +8,7 @@ import {
   Users,
   ShieldCheck,
   ScrollText,
+  Mail,
 } from "lucide-react";
 
 export const candidateNav = [
@@ -27,5 +28,6 @@ export const adminNav = [
   { to: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard, end: true },
   { to: "/admin/users", label: "Users", icon: Users },
   { to: "/admin/jobs", label: "Jobs", icon: ShieldCheck },
+  { to: "/admin/messages", label: "Messages", icon: Mail },
   { to: "/admin/logs", label: "Logs", icon: ScrollText },
 ];

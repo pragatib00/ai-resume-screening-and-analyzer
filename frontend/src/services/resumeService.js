@@ -9,3 +9,8 @@ export const analyzeResume = (file, jobDescription) => {
     headers: { "Content-Type": "multipart/form-data" },
   });
 };
+
+export const getResumeHistory = () => api.get("/resume/history");
+
+export const getResumeHistoryDetail = (analysisId) =>
+  api.get(`/resume/history/${analysisId}`);
