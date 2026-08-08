@@ -140,3 +140,55 @@ def get_me(current_user: models.User = Depends(get_current_user)):
         "role": current_user.role,
         "status": current_user.status
     }
+
+
+@router.patch(
+    "/me",
+    response_model=schemas.UserResponse
+)
+def update_profile(
+    profile_update: schemas.UserProfileUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    name = profile_update.name.strip()
+
+    if not name:
+        raise HTTPException(
+            status_code=400,
+            detail="Name cannot be empty."
+        )
+
+    current_user.name = name
+
+    db.commit()
+    db.refresh(current_user)
+
+    return current_user
+
+
+@router.patch("/me/password")
+def update_password(
+    password_update: schemas.PasswordUpdate,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(get_current_user)
+):
+    if not verify_password(password_update.current_password, current_user.password):
+        raise HTTPException(
+            status_code=400,
+            detail="Current password is incorrect."
+        )
+
+    if len(password_update.new_password) < 8:
+        raise HTTPException(
+            status_code=400,
+            detail="New password must be at least 8 characters."
+        )
+
+    current_user.password = hash_password(password_update.new_password)
+
+    db.commit()
+
+    return {
+        "message": "Password updated successfully."
+    }

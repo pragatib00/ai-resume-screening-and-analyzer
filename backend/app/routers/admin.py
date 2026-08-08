@@ -254,6 +254,23 @@ def get_analytics(
 
 
 @router.get(
+    "/resume-analyses",
+    response_model=list[schemas.ResumeAnalysisAdminItem]
+)
+def list_resume_analyses(
+    limit: int = 10,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_role("admin"))
+):
+    return (
+        db.query(models.ResumeAnalysis)
+        .order_by(models.ResumeAnalysis.created_at.desc())
+        .limit(limit)
+        .all()
+    )
+
+
+@router.get(
     "/logs",
     response_model=list[schemas.ErrorLogResponse]
 )
@@ -268,6 +285,68 @@ def get_error_logs(
         .limit(limit)
         .all()
     )
+
+
+
+# ---------------------------------------------------------
+# Contact Messages
+# ---------------------------------------------------------
+
+@router.get(
+    "/messages",
+    response_model=list[schemas.ContactMessageResponse]
+)
+def list_contact_messages(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_role("admin"))
+):
+    return (
+        db.query(models.ContactMessage)
+        .order_by(models.ContactMessage.created_at.desc())
+        .all()
+    )
+
+
+@router.get(
+    "/messages/unread-count",
+    response_model=schemas.UnreadCountResponse
+)
+def get_unread_message_count(
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_role("admin"))
+):
+    unread_count = db.query(models.ContactMessage).filter(
+        models.ContactMessage.is_read == False  # noqa: E712
+    ).count()
+
+    return schemas.UnreadCountResponse(unread_count=unread_count)
+
+
+@router.patch(
+    "/messages/{message_id}/read",
+    response_model=schemas.ContactMessageResponse
+)
+def mark_message_read(
+    message_id: int,
+    db: Session = Depends(get_db),
+    current_user: models.User = Depends(require_role("admin"))
+):
+    message = db.query(models.ContactMessage).filter(
+        models.ContactMessage.id == message_id
+    ).first()
+
+    if message is None:
+        raise HTTPException(
+            status_code=404,
+            detail="Message not found"
+        )
+
+    message.is_read = True
+
+    db.commit()
+    db.refresh(message)
+
+    return message
 
 
 @router.get(

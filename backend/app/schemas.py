@@ -33,6 +33,13 @@ class UserRoleUpdate(BaseModel):
 class UserStatusUpdate(BaseModel):
     status: str
 
+class UserProfileUpdate(BaseModel):
+    name: str
+
+class PasswordUpdate(BaseModel):
+    current_password: str
+    new_password: str
+
 class CandidateInfo(BaseModel):
     id: int
     name: str
@@ -203,3 +210,57 @@ class AnalyticsResponse(BaseModel):
     total_analyses: int
     average_ats_score: float
     top_missing_skills: list[MissingSkillCount]
+
+
+class ContactMessageCreate(BaseModel):
+    name: str
+    email: str
+    message: str
+
+
+class ContactMessageResponse(BaseModel):
+    id: int
+    name: str
+    email: str
+    message: str
+    is_read: bool
+    created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
+class UnreadCountResponse(BaseModel):
+    unread_count: int
+
+
+class ResumeHistoryItem(BaseModel):
+    id: int
+    ats_score: float
+    created_at: datetime
+    has_details: bool
+
+
+class NotificationResponse(BaseModel):
+    id: int
+    type: str
+    message: str
+    link: Optional[str] = None
+    is_read: bool
+    created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
+class ResumeAnalysisAdminItem(BaseModel):
+    id: int
+    candidate: Optional[CandidateInfo] = None
+    ats_score: float
+    created_at: datetime
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
