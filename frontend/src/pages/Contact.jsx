@@ -9,6 +9,7 @@ import Button from "../components/ui/Button";
 import Alert from "../components/ui/Alert";
 import { useToast } from "../context/ToastContext";
 import { validateName, validateEmail, validateRequired } from "../utils/validators";
+import { sendContactMessage } from "../services/contactService";
 
 const CONTACT_EMAIL = "resumeiq.help@gmail.com";
 const CONTACT_PHONE = "9749713834";
@@ -63,19 +64,23 @@ function Contact() {
     return Object.keys(cleaned).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     setSent(false);
 
     if (!validate()) return;
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      await sendContactMessage(formData);
       setSent(true);
-      toast.success("Message sent — we'll get back to you soon.");
+      toast.success("Message sent , we'll get back to you soon.");
       setFormData({ name: "", email: "", message: "" });
-    }, 700);
+    } catch (err) {
+      toast.error(err.response?.data?.detail || "Failed to send message.");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -94,7 +99,7 @@ function Contact() {
             We'd love to hear from you
           </h1>
           <p className="mt-5 text-lg text-blue-100 max-w-2xl mx-auto">
-            Questions, feedback, or partnership ideas — reach out and our team
+            Questions, feedback, or partnership ideas, reach out and our team
             will get back to you shortly.
           </p>
         </div>

@@ -8,6 +8,7 @@ import About from "./pages/About";
 import Contact from "./pages/Contact";
 import Login from "./pages/auth/Login";
 import Register from "./pages/auth/Register";
+import Profile from "./pages/Profile";
 
 import CandidateDashboard from "./pages/candidate/Dashboard";
 import BrowseJobs from "./pages/candidate/BrowseJobs";
@@ -24,6 +25,8 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import AdminUsers from "./pages/admin/Users";
 import AdminJobs from "./pages/admin/Jobs";
 import AdminLogs from "./pages/admin/Logs";
+import AdminMessages from "./pages/admin/Messages";
+import AdminResumeAnalyses from "./pages/admin/ResumeAnalyses";
 
 function App() {
   return (
@@ -36,6 +39,14 @@ function App() {
           <Route path="/contact" element={<Contact />} />
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
+          <Route
+            path="/profile"
+            element={
+              <ProtectedRoute allowedRoles={["candidate", "recruiter", "admin"]}>
+                <Profile />
+              </ProtectedRoute>
+            }
+          />
 
           <Route
             path="/candidate/dashboard"
@@ -148,6 +159,22 @@ function App() {
             element={
               <ProtectedRoute allowedRoles={["admin"]}>
                 <AdminLogs />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/messages"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminMessages />
+              </ProtectedRoute>
+            }
+          />
+          <Route
+            path="/admin/resume-analyses"
+            element={
+              <ProtectedRoute allowedRoles={["admin"]}>
+                <AdminResumeAnalyses />
               </ProtectedRoute>
             }
           />

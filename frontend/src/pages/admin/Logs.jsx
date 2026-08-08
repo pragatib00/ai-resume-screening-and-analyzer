@@ -39,7 +39,7 @@ function Logs() {
             <EmptyState
               icon={ScrollText}
               title="No errors logged"
-              description="Nothing to see here — the system has been running smoothly."
+              description="Nothing to see here, the system has been running smoothly."
             />
           </Card>
         ) : (

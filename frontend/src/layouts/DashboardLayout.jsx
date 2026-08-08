@@ -1,14 +1,15 @@
 import { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { X, LogOut } from "lucide-react";
+import { Link, NavLink } from "react-router-dom";
+import { X } from "lucide-react";
 import Sidebar from "./Sidebar";
 import Topbar from "./Topbar";
 import Logo from "../components/ui/Logo";
 import ConfirmDialog from "../components/ui/ConfirmDialog";
+import DashboardFooter from "../components/common/DashboardFooter";
 import { useAuth } from "../context/AuthContext";
 import { useToast } from "../context/ToastContext";
 
-function MobileSidebar({ open, onClose, navItems, onLogoutClick }) {
+function MobileSidebar({ open, onClose, navItems }) {
   if (!open) return null;
 
   return (
@@ -17,7 +18,9 @@ function MobileSidebar({ open, onClose, navItems, onLogoutClick }) {
 
       <div className="absolute left-0 top-0 h-full w-72 bg-white flex flex-col shadow-2xl">
         <div className="px-6 py-6 border-b border-slate-100 flex items-center justify-between">
-          <Logo />
+          <Link to="/" onClick={onClose}>
+            <Logo />
+          </Link>
           <button onClick={onClose} className="text-slate-400">
             <X size={20} />
           </button>
@@ -43,16 +46,6 @@ function MobileSidebar({ open, onClose, navItems, onLogoutClick }) {
             </NavLink>
           ))}
         </nav>
-
-        <div className="px-3 py-4 border-t border-slate-100">
-          <button
-            onClick={onLogoutClick}
-            className="flex w-full items-center gap-3 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-500 hover:bg-red-50 hover:text-red-600 transition"
-          >
-            <LogOut size={18} />
-            Log Out
-          </button>
-        </div>
       </div>
     </div>
   );
@@ -73,16 +66,19 @@ function DashboardLayout({ navItems, title, children }) {
 
   return (
     <div className="min-h-screen flex bg-slate-50">
-      <Sidebar navItems={navItems} onLogoutClick={() => setConfirmLogout(true)} />
+      <Sidebar navItems={navItems} />
       <MobileSidebar
         open={mobileOpen}
         onClose={() => setMobileOpen(false)}
         navItems={navItems}
-        onLogoutClick={() => setConfirmLogout(true)}
       />
 
       <div className="flex-1 min-w-0 flex flex-col">
-        <Topbar title={title} onMenuClick={() => setMobileOpen(true)} />
+        <Topbar
+          title={title}
+          onMenuClick={() => setMobileOpen(true)}
+          onLogoutClick={() => setConfirmLogout(true)}
+        />
 
         <main
           className="flex-1 p-4 sm:p-10"
@@ -95,6 +91,8 @@ function DashboardLayout({ navItems, title, children }) {
         >
           {children}
         </main>
+
+        <DashboardFooter />
       </div>
 
       <ConfirmDialog

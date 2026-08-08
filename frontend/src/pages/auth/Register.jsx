@@ -80,7 +80,7 @@ function Register() {
         setSuccess(
           "Account created. Recruiter accounts require admin approval before you can log in."
         );
-        toast.success("Account created — pending admin approval.");
+        toast.success("Account created, pending admin approval.");
       } else {
         setSuccess("Account created successfully. Redirecting to login...");
         toast.success("Account created successfully!");

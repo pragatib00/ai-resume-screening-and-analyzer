@@ -20,3 +20,11 @@ export const login = async (email, password) => {
 export const getCurrentUser = () => {
   return api.get("/users/me");
 };
+
+export const updateProfile = (name) => api.patch("/users/me", { name });
+
+export const changePassword = (currentPassword, newPassword) =>
+  api.patch("/users/me/password", {
+    current_password: currentPassword,
+    new_password: newPassword,
+  });

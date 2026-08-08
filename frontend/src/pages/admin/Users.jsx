@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { Users as UsersIcon, Trash2, ShieldCheck, ShieldOff } from "lucide-react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { adminNav } from "../../layouts/navConfig";
@@ -20,6 +20,13 @@ import {
 
 const ASSIGNABLE_ROLES = ["candidate", "recruiter"];
 
+const ROLE_FILTERS = [
+  { value: "all", label: "All" },
+  { value: "candidate", label: "Candidates" },
+  { value: "recruiter", label: "Recruiters" },
+  { value: "admin", label: "Admins" },
+];
+
 function Users() {
   const { user: currentUser } = useAuth();
   const toast = useToast();
@@ -28,6 +35,18 @@ function Users() {
   const [busyId, setBusyId] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
+  const [roleFilter, setRoleFilter] = useState("all");
+
+  const roleCounts = useMemo(() => {
+    const counts = { all: users.length, candidate: 0, recruiter: 0, admin: 0 };
+    for (const u of users) counts[u.role] = (counts[u.role] || 0) + 1;
+    return counts;
+  }, [users]);
+
+  const filteredUsers = useMemo(
+    () => (roleFilter === "all" ? users : users.filter((u) => u.role === roleFilter)),
+    [users, roleFilter]
+  );
 
   const load = () => {
     getUsers()
@@ -87,13 +106,48 @@ function Users() {
   return (
     <DashboardLayout navItems={adminNav} title="Users">
       <div className="max-w-6xl mx-auto">
+        <div className="flex flex-wrap gap-2 mb-5">
+          {ROLE_FILTERS.map(({ value, label }) => {
+            const active = roleFilter === value;
+            return (
+              <button
+                key={value}
+                type="button"
+                onClick={() => setRoleFilter(value)}
+                className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
+                  active
+                    ? "bg-blue-600 text-white shadow-sm shadow-blue-600/20"
+                    : "bg-white text-slate-600 border border-slate-200 hover:border-slate-300"
+                }`}
+              >
+                {label}
+                <span
+                  className={`text-xs rounded-full px-1.5 py-0.5 ${
+                    active ? "bg-white/20" : "bg-slate-100 text-slate-500"
+                  }`}
+                >
+                  {roleCounts[value] || 0}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+
         {loading ? (
           <div className="flex justify-center py-24">
             <Spinner size={28} />
           </div>
-        ) : users.length === 0 ? (
+        ) : filteredUsers.length === 0 ? (
           <Card>
-            <EmptyState icon={UsersIcon} title="No users found" />
+            <EmptyState
+              icon={UsersIcon}
+              title="No users found"
+              description={
+                roleFilter !== "all"
+                  ? `No ${roleFilter}s match this filter.`
+                  : undefined
+              }
+            />
           </Card>
         ) : (
           <Card padded={false} className="overflow-hidden">
@@ -109,7 +163,7 @@ function Users() {
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
-                  {users.map((u) => {
+                  {filteredUsers.map((u) => {
                     const isSelf = u.id === currentUser.id;
                     const busy = busyId === u.id;
 

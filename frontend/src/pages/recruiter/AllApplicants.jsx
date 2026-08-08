@@ -173,6 +173,11 @@ function AllApplicants() {
         applicant={selected}
         open={!!selected}
         onClose={() => setSelected(null)}
+        onAnalyzed={(applicationId, atsScore) =>
+          setApplicants((prev) =>
+            prev.map((a) => (a.id === applicationId ? { ...a, match_score: atsScore } : a))
+          )
+        }
       />
     </DashboardLayout>
   );
