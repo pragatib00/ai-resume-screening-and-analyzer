@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 from sqlalchemy import func
+from sqlalchemy.exc import SQLAlchemyError
 
 from app.database import get_db
 from app import models, schemas
@@ -153,8 +154,42 @@ def delete_user(
             detail="User not found"
         )
 
-    db.delete(user)
-    db.commit()
+    try:
+
+        # Cascade: remove all rows referencing this user first,
+        # otherwise the database's foreign key constraints block
+        # deletion of the user.
+        db.query(models.Notification).filter(
+            models.Notification.user_id == user_id
+        ).delete(synchronize_session=False)
+
+        db.query(models.Application).filter(
+            models.Application.candidate_id == user_id
+        ).delete(synchronize_session=False)
+
+        db.query(models.ResumeAnalysis).filter(
+            models.ResumeAnalysis.candidate_id == user_id
+        ).delete(synchronize_session=False)
+
+        for job in db.query(models.Job).filter(
+            models.Job.posted_by == user_id
+        ).all():
+            db.query(models.Application).filter(
+                models.Application.job_id == job.id
+            ).delete(synchronize_session=False)
+            db.delete(job)
+
+        db.delete(user)
+        db.commit()
+
+    except SQLAlchemyError as e:
+
+        db.rollback()
+
+        raise HTTPException(
+            status_code=500,
+            detail=f"Unable to delete user: {str(e)}"
+        )
 
     return {
         "message": f"User {user_id} deleted successfully."
