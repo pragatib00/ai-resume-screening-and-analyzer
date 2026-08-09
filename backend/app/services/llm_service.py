@@ -2,19 +2,25 @@ import json
 import re
 import requests
 
+
 OLLAMA_URL = "http://localhost:11434/api/generate"
 MODEL = "llama3.2:3b"
 
 
 def query_llm(prompt):
-
     response = requests.post(
         OLLAMA_URL,
         json={
             "model": MODEL,
             "prompt": prompt,
-            "stream": False
-        }
+            "stream": False,
+            "options": {
+                "temperature": 0,
+                "num_predict": 300
+            },
+            "keep_alive": "10m"
+        },
+        timeout=120
     )
 
     response.raise_for_status()
@@ -41,8 +47,7 @@ def flatten_items(items):
             if piece:
                 flattened.append(piece)
 
-    # remove duplicates while preserving order
-
+    # Remove duplicates while preserving order
     seen = set()
     result = []
 
@@ -51,112 +56,114 @@ def flatten_items(items):
         key = item.lower()
 
         if key not in seen:
-
             seen.add(key)
             result.append(item)
 
     return result
 
 
-def extract_list(text, instruction, retries=1):
+def parse_json_object(response):
+
+    """
+    Extract the JSON object from the LLM response.
+    """
+
+    start = response.find("{")
+    end = response.rfind("}") + 1
+
+    if start == -1 or end <= start:
+        raise ValueError("No JSON object found.")
+
+    return json.loads(response[start:end])
+
+
+def extract_structured_information(text, mode="resume", retries=1):
+
+    if mode == "resume":
+
+        task = """
+Extract the following information from the resume:
+
+1. skills:
+   Extract ALL technical skills.
+
+   Include:
+   - Programming Languages
+   - Libraries
+   - Frameworks
+   - Databases
+   - Developer Tools
+   - Cloud Platforms
+   - Technologies
+   - APIs
+
+   Do NOT include soft skills.
+
+2. education:
+   Extract ONLY degree names.
+
+   Examples:
+   - B.Sc. in Computer Science
+   - B.E. Software Engineering
+   - M.Sc. Data Science
+
+3. experience_years:
+   Estimate the total number of years of professional work experience.
+
+"""
+
+    else:
+
+        task = """
+Extract the following information from the job description:
+
+1. skills:
+   Extract ALL required technical skills.
+
+   Include:
+   - Programming Languages
+   - Libraries
+   - Frameworks
+   - Databases
+   - Developer Tools
+   - Cloud Platforms
+   - Technologies
+   - APIs
+
+   Do NOT include soft skills.
+
+2. education:
+   Extract ONLY required degree names.
+
+3. experience_years:
+   Extract the number of years of professional experience required.
+
+"""
 
     prompt = f"""
-You are an expert ATS Resume Parser.
-
-Resume / Job Description:
+You are an expert ATS information extraction system.
 
 {text}
 
-Task:
+{task}
 
-{instruction}
+IMPORTANT RULES:
 
-Rules:
+1. Return ONLY valid JSON.
+2. Do not provide explanations.
+3. Every skill must be an individual item.
+4. Remove duplicate skills.
+5. Do not combine multiple skills into one item.
+6. Do not omit programming languages.
+7. If information is not available, return an empty list or 0.
 
-1. Return ONLY a JSON array.
+Return EXACTLY this structure:
 
-2. Every element must be ONE individual item.
-
-3. Never combine multiple skills into one string.
-
-4. Remove duplicates.
-
-5. Ignore soft skills.
-
-6. Include ALL technical skills.
-
-Technical skills include:
-
-- Programming Languages
-- Libraries
-- Frameworks
-- Databases
-- Developer Tools
-- Cloud Platforms
-- Technologies
-- APIs
-
-VERY IMPORTANT:
-
-If a resume contains
-
-Programming Languages:
-Python
-
-Libraries:
-Pandas
-NumPy
-Scikit-learn
-
-Return
-
-[
-"Python",
-"Pandas",
-"NumPy",
-"Scikit-learn"
-]
-
-If the resume contains
-
-Python (Pandas, NumPy, Matplotlib)
-
-Return
-
-[
-"Python",
-"Pandas",
-"NumPy",
-"Matplotlib"
-]
-
-If the resume contains
-
-Programming:
-Python, SQL
-
-Return
-
-[
-"Python",
-"SQL"
-]
-
-Do NOT omit the programming language.
-
-Do NOT explain anything.
-
-Return ONLY valid JSON.
-
-Example:
-
-[
-"Python",
-"SQL",
-"Pandas",
-"NumPy",
-"Machine Learning"
-]
+{{
+    "skills": [],
+    "education": [],
+    "experience_years": 0
+}}
 """
 
     last_error = None
@@ -167,177 +174,81 @@ Example:
 
             response = query_llm(prompt)
 
-            start = response.find("[")
-            end = response.rfind("]") + 1
+            data = parse_json_object(response)
 
-            if start == -1 or end <= start:
-
-                raise ValueError("No JSON array found.")
-
-            raw_items = json.loads(
-                response[start:end]
+            skills = data.get("skills", [])
+            education = data.get("education", [])
+            experience_years = data.get(
+                "experience_years",
+                0
             )
 
-            items = flatten_items(raw_items)
+            # Make sure lists are actually lists
+            if not isinstance(skills, list):
+                skills = []
 
-            if items:
+            if not isinstance(education, list):
+                education = []
 
-                return items
+            # Clean extracted items
+            skills = flatten_items(skills)
+            education = flatten_items(education)
 
-            last_error = "Empty array"
+            # Make sure experience is an integer
+            if isinstance(experience_years, str):
 
-        except Exception as e:
+                match = re.search(
+                    r"\d+",
+                    experience_years
+                )
 
-            last_error = e
+                experience_years = (
+                    int(match.group())
+                    if match
+                    else 0
+                )
 
-    print(
-        f"extract_list: giving up after {retries+1} attempts. Last error: {last_error}"
-    )
+            elif not isinstance(
+                experience_years,
+                int
+            ):
 
-    return []
+                experience_years = 0
 
-
-def extract_integer(text, instruction, retries=1):
-
-    prompt = f"""
-{text}
-
-{instruction}
-
-Return ONLY one integer.
-
-Example:
-
-2
-"""
-
-    last_error = None
-
-    for attempt in range(retries + 1):
-
-        try:
-
-            response = query_llm(prompt)
-
-            match = re.search(r"\d+", response)
-
-            if match:
-
-                return int(match.group())
-
-            last_error = "No integer found."
+            return {
+                "skills": skills,
+                "education": education,
+                "experience_years": experience_years
+            }
 
         except Exception as e:
 
             last_error = e
 
     print(
-        f"extract_integer: giving up after {retries+1} attempts. Last error: {last_error}"
+        f"extract_structured_information: "
+        f"failed after {retries + 1} attempts. "
+        f"Last error: {last_error}"
     )
 
-    return 0
+    return {
+        "skills": [],
+        "education": [],
+        "experience_years": 0
+    }
 
 
 def extract_resume_information(text):
 
-    return {
-
-        "skills": extract_list(
-
-            text,
-
-            """
-Extract ALL technical skills.
-
-Include:
-
-- Programming Languages
-- Libraries
-- Frameworks
-- Databases
-- Developer Tools
-- Technologies
-- APIs
-
-Do NOT ignore programming languages.
-
-If Python is listed as a programming language,
-include Python.
-
-Return ONLY technical skills.
-"""
-        ),
-
-        "education": extract_list(
-
-            text,
-
-            """
-Extract ONLY degree names.
-
-Examples:
-
-B.Sc. in Computer Science
-
-B.E. Software Engineering
-
-M.Sc. Data Science
-
-Return only degrees.
-"""
-        ),
-
-        "experience_years": extract_integer(
-
-            text,
-
-            "How many years of professional experience does this resume show?"
-
-        )
-
-    }
+    return extract_structured_information(
+        text,
+        mode="resume"
+    )
 
 
 def extract_job_information(text):
 
-    return {
-
-        "skills": extract_list(
-
-            text,
-
-            """
-Extract ALL required technical skills.
-
-Include:
-
-- Programming Languages
-- Libraries
-- Frameworks
-- Databases
-- Developer Tools
-- Technologies
-- APIs
-
-Return ONLY technical skills.
-"""
-        ),
-
-        "education": extract_list(
-
-            text,
-
-            """
-Extract ONLY required degree names.
-"""
-        ),
-
-        "experience_years": extract_integer(
-
-            text,
-
-            "How many years of professional experience are required?"
-
-        )
-
-    }
+    return extract_structured_information(
+        text,
+        mode="job"
+    )
