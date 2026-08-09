@@ -319,7 +319,11 @@ def show():
                                 st.success("User deleted.")
                                 st.rerun()
                             else:
-                                st.error("Failed to delete user.")
+                                try:
+                                    detail = r.json().get("detail", "Failed to delete user.")
+                                except ValueError:
+                                    detail = "Failed to delete user."
+                                st.error(detail)
 
     st.divider()
 
