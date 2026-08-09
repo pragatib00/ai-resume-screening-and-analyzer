@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import { UploadCloud, FileText, ScanSearch, History } from "lucide-react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { candidateNav } from "../../layouts/navConfig";
@@ -9,6 +9,7 @@ import Button from "../../components/ui/Button";
 import Alert from "../../components/ui/Alert";
 import Spinner from "../../components/ui/Spinner";
 import EmptyState from "../../components/ui/EmptyState";
+import Modal from "../../components/ui/Modal";
 import ResultsPanel from "../../components/candidate/ResultsPanel";
 import { useToast } from "../../context/ToastContext";
 import {
@@ -23,7 +24,6 @@ function formatDate(iso) {
 
 function ResumeAnalyzer() {
   const toast = useToast();
-  const resultsRef = useRef(null);
   const [file, setFile] = useState(null);
   const [jobDescription, setJobDescription] = useState("");
   const [loading, setLoading] = useState(false);
@@ -42,10 +42,6 @@ function ResumeAnalyzer() {
   };
 
   useEffect(loadHistory, []);
-
-  const scrollToResults = () => {
-    resultsRef.current?.scrollIntoView({ behavior: "smooth", block: "start" });
-  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -84,7 +80,6 @@ function ResumeAnalyzer() {
       const res = await getResumeHistoryDetail(entry.id);
       setResult(res.data);
       setError("");
-      requestAnimationFrame(scrollToResults);
     } catch (err) {
       toast.error(err.response?.data?.detail || "Failed to load this analysis.");
     } finally {
@@ -203,8 +198,16 @@ function ResumeAnalyzer() {
           )}
         </Card>
 
-        <div ref={resultsRef}>{result && <ResultsPanel result={result} />}</div>
       </div>
+
+      <Modal
+        open={!!result}
+        onClose={() => setResult(null)}
+        title="Analysis Results"
+        size="xl"
+      >
+        {result && <ResultsPanel result={result} />}
+      </Modal>
     </DashboardLayout>
   );
 }

@@ -145,7 +145,7 @@ function Register() {
                 value={formData.name}
                 onChange={handleChange}
                 error={fieldErrors.name}
-                placeholder="Jane Doe"
+                placeholder="Enter your full name"
               />
 
               <Input
