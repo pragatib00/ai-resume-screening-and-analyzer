@@ -1,17 +1,8 @@
 import fitz
 import re
-import nltk
-
-from nltk.corpus import stopwords
-
-try:
-    stopwords.words("english")
-except LookupError:
-    nltk.download("stopwords")
 
 
 def extract_text_from_pdf(pdf_path: str) -> str:
-    
 
     document = fitz.open(pdf_path)
 

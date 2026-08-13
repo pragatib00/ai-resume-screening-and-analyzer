@@ -151,7 +151,7 @@ class ResumeAnalysis(Base):
     # stored as a JSON-encoded list, e.g. '["SQL", "AWS"]'
 
     full_result = Column(String, nullable=True)
-    # stored as a JSON-encoded ResumeAnalysisResponse, used to reopen past analyses
+    # stored as a JSON-encoded ResumeAnalysisResponse
 
     created_at = Column(
         DateTime(timezone=True),

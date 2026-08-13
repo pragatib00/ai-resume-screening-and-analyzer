@@ -1,146 +1,5 @@
-import math
-import re
-from collections import Counter
-
+from app.services.tfidf_service import tfidf_similarity
 from app.services.fuzzy_match import token_set_ratio
-
-
-# ==========================================================
-# Text Preprocessing
-# ==========================================================
-
-def preprocess(text):
-
-    text = text.lower()
-
-    return re.findall(r"[a-z0-9]+", text)
-
-
-# ==========================================================
-# Manual TF
-# ==========================================================
-
-def term_frequency(tokens):
-
-    total = len(tokens)
-
-    if total == 0:
-        return {}
-
-    counts = Counter(tokens)
-
-    tf = {}
-
-    for word, count in counts.items():
-        tf[word] = count / total
-
-    return tf
-
-
-# ==========================================================
-# Manual IDF
-# ==========================================================
-
-def inverse_document_frequency(documents):
-
-    N = len(documents)
-
-    vocabulary = set()
-
-    for doc in documents:
-        vocabulary.update(doc)
-
-    idf = {}
-
-    for word in vocabulary:
-
-        containing = sum(
-            1 for doc in documents if word in doc
-        )
-
-        idf[word] = math.log((N + 1) / (containing + 1)) + 1
-
-    return idf
-
-
-# ==========================================================
-# TF-IDF Vector
-# ==========================================================
-
-def tfidf_vector(tokens, idf):
-
-    tf = term_frequency(tokens)
-
-    vector = {}
-
-    for word in idf:
-
-        vector[word] = tf.get(word, 0) * idf[word]
-
-    return vector
-
-
-# ==========================================================
-# Manual Cosine Similarity
-# ==========================================================
-
-def cosine_similarity(v1, v2):
-
-    words = set(v1.keys()) | set(v2.keys())
-
-    dot = 0
-    norm1 = 0
-    norm2 = 0
-
-    for word in words:
-
-        a = v1.get(word, 0)
-        b = v2.get(word, 0)
-
-        dot += a * b
-
-        norm1 += a * a
-        norm2 += b * b
-
-    if norm1 == 0 or norm2 == 0:
-        return 0
-
-    return dot / (math.sqrt(norm1) * math.sqrt(norm2))
-
-
-# ==========================================================
-# TF-IDF Similarity
-# ==========================================================
-
-def tfidf_similarity(resume_text, job_text):
-
-    resume_tokens = preprocess(resume_text)
-    job_tokens = preprocess(job_text)
-
-    if not resume_tokens or not job_tokens:
-        return 0
-
-    idf = inverse_document_frequency([
-        resume_tokens,
-        job_tokens
-    ])
-
-    resume_vector = tfidf_vector(
-        resume_tokens,
-        idf
-    )
-
-    job_vector = tfidf_vector(
-        job_tokens,
-        idf
-    )
-
-    similarity = cosine_similarity(
-        resume_vector,
-        job_vector
-    )
-
-    return round(similarity * 100, 2)
 
 
 # ==========================================================
@@ -152,7 +11,6 @@ def fuzzy_similarity(
     job_items,
     threshold=80
 ):
-
     if not job_items:
         return 100
 
@@ -228,7 +86,7 @@ def calculate_ats_score(
     )
 
     # ------------------------------------------
-    # Fuzzy Skill Matching (for reporting)
+    # Fuzzy Skill Matching
     # ------------------------------------------
 
     fuzzy_skill_score = fuzzy_similarity(
@@ -277,24 +135,31 @@ def calculate_ats_score(
         experience * 0.30
     )
 
-    return {
+    # ------------------------------------------
+    # Return all scores
+    # ------------------------------------------
 
+    return {
         "ats_score": round(ats, 2),
 
-        "skills_score": round(skills_score, 2),
+        "skills_score": round(
+            skills_score,
+            2
+        ),
 
-        "education_score": round(education_score, 2),
+        "education_score": round(
+            education_score,
+            2
+        ),
 
-        "experience_score": round(experience, 2),
-
-        "tfidf_score": round(tfidf_score, 2),
-
-        "fuzzy_skill_score": round(fuzzy_skill_score, 2),
+        "experience_score": round(
+            experience,
+            2
+        ),
 
         "scored_categories": [
             "skills",
             "education",
             "experience"
         ]
-
     }
