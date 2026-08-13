@@ -111,14 +111,14 @@ function Dashboard() {
                 label="Candidates"
                 value={stats.total_candidates}
                 tone="blue"
-                onClick={() => navigate("/admin/users")}
+                onClick={() => navigate("/admin/users?role=candidate")}
               />
               <StatCard
                 icon={Building2}
                 label="Recruiters"
                 value={stats.total_recruiters}
                 tone="purple"
-                onClick={() => navigate("/admin/users")}
+                onClick={() => navigate("/admin/users?role=recruiter")}
               />
               <StatCard
                 icon={Briefcase}
