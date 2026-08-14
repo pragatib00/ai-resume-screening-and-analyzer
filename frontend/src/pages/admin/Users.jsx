@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from "react";
+import { useSearchParams } from "react-router-dom";
 import { Users as UsersIcon, Trash2, ShieldCheck, ShieldOff } from "lucide-react";
 import DashboardLayout from "../../layouts/DashboardLayout";
 import { adminNav } from "../../layouts/navConfig";
@@ -27,15 +28,26 @@ const ROLE_FILTERS = [
   { value: "admin", label: "Admins" },
 ];
 
+const VALID_ROLE_FILTERS = ROLE_FILTERS.map((f) => f.value);
+
 function Users() {
   const { user: currentUser } = useAuth();
   const toast = useToast();
+  const [searchParams, setSearchParams] = useSearchParams();
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [busyId, setBusyId] = useState(null);
   const [confirmAction, setConfirmAction] = useState(null);
   const [confirmBusy, setConfirmBusy] = useState(false);
-  const [roleFilter, setRoleFilter] = useState("all");
+  const initialRole = searchParams.get("role");
+  const [roleFilter, setRoleFilter] = useState(
+    VALID_ROLE_FILTERS.includes(initialRole) ? initialRole : "all"
+  );
+
+  const handleRoleFilterChange = (value) => {
+    setRoleFilter(value);
+    setSearchParams(value === "all" ? {} : { role: value });
+  };
 
   const roleCounts = useMemo(() => {
     const counts = { all: users.length, candidate: 0, recruiter: 0, admin: 0 };
@@ -113,7 +125,7 @@ function Users() {
               <button
                 key={value}
                 type="button"
-                onClick={() => setRoleFilter(value)}
+                onClick={() => handleRoleFilterChange(value)}
                 className={`inline-flex items-center gap-2 rounded-xl px-4 py-2 text-sm font-medium transition ${
                   active
                     ? "bg-blue-600 text-white shadow-sm shadow-blue-600/20"
